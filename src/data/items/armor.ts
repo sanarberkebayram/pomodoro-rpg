@@ -305,6 +305,121 @@ export const ARMOR_TEMPLATES: Record<string, ItemTemplate> = {
       luck: [3, 6],
     },
   },
+
+  // SPECIALIZED ELITE ARMOR - Unique and powerful
+  'rangers-cloak': {
+    id: 'rangers-cloak',
+    name: "Ranger's Cloak",
+    description: 'Enchanted cloak that blends with natural surroundings.',
+    type: 'armor',
+    icon: 'armor-light-ranger',
+    armorType: 'light',
+    statRanges: {
+      defense: [5, 10],
+      focus: [6, 12],
+      luck: [5, 10],
+    },
+  },
+  'berserkers-mail': {
+    id: 'berserkers-mail',
+    name: "Berserker's Mail",
+    description: 'Aggressive armor that enhances offensive power.',
+    type: 'armor',
+    icon: 'armor-medium-berserker',
+    armorType: 'medium',
+    statRanges: {
+      defense: [7, 13],
+      power: [5, 10],
+      focus: [2, 5],
+      luck: [1, 3],
+    },
+  },
+  'paladins-plate': {
+    id: 'paladins-plate',
+    name: "Paladin's Plate",
+    description: 'Sacred armor blessed by divine light.',
+    type: 'armor',
+    icon: 'armor-heavy-paladin',
+    armorType: 'heavy',
+    statRanges: {
+      defense: [13, 20],
+      power: [6, 11],
+      focus: [3, 6],
+      luck: [4, 8],
+    },
+  },
+  'elementalist-robe': {
+    id: 'elementalist-robe',
+    name: 'Elementalist Robe',
+    description: 'Robes woven with the essence of the elements.',
+    type: 'armor',
+    icon: 'armor-robe-elementalist',
+    armorType: 'robe',
+    statRanges: {
+      defense: [4, 9],
+      power: [4, 8],
+      focus: [11, 19],
+      luck: [6, 11],
+    },
+  },
+
+  // MASTER CRAFTSMAN TIER - Exceptional quality
+  'master-leather': {
+    id: 'master-leather',
+    name: 'Master Leather Armor',
+    description: 'The pinnacle of leatherworking craftsmanship.',
+    type: 'armor',
+    icon: 'armor-light-master',
+    armorType: 'light',
+    statRanges: {
+      defense: [8, 14],
+      power: [3, 6],
+      focus: [8, 14],
+      luck: [7, 12],
+    },
+  },
+  'master-chainmail': {
+    id: 'master-chainmail',
+    name: 'Master Chainmail',
+    description: 'Perfectly interwoven rings of the finest steel.',
+    type: 'armor',
+    icon: 'armor-medium-master',
+    armorType: 'medium',
+    statRanges: {
+      defense: [11, 18],
+      power: [4, 8],
+      focus: [5, 9],
+      luck: [3, 6],
+    },
+  },
+  'master-plate': {
+    id: 'master-plate',
+    name: 'Master Plate Armor',
+    description: 'Legendary full plate of unmatched quality.',
+    type: 'armor',
+    icon: 'armor-heavy-master',
+    armorType: 'heavy',
+    statRanges: {
+      defense: [15, 24],
+      power: [7, 13],
+      focus: [3, 7],
+      luck: [4, 8],
+    },
+  },
+  'master-robe': {
+    id: 'master-robe',
+    name: 'Master Mystic Robe',
+    description: 'The ultimate achievement in magical garment crafting.',
+    type: 'armor',
+    icon: 'armor-robe-master',
+    armorType: 'robe',
+    statRanges: {
+      defense: [5, 10],
+      power: [4, 9],
+      focus: [13, 22],
+      luck: [8, 14],
+    },
+  },
 };
 
 /**

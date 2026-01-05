@@ -298,6 +298,122 @@ export const WEAPON_TEMPLATES: Record<string, ItemTemplate> = {
       focus: [4, 8],
     },
   },
+
+  // CROSSBOWS - High focus and luck, moderate power
+  crossbow: {
+    id: 'crossbow',
+    name: 'Crossbow',
+    description: 'A mechanical bow with deadly precision.',
+    type: 'weapon',
+    icon: 'weapon-bow-crossbow',
+    weaponType: 'bow',
+    statRanges: {
+      power: [6, 11],
+      focus: [7, 12],
+      luck: [2, 5],
+    },
+  },
+  'heavy-crossbow': {
+    id: 'heavy-crossbow',
+    name: 'Heavy Crossbow',
+    description: 'A powerful crossbow that pierces through armor.',
+    type: 'weapon',
+    icon: 'weapon-bow-heavy-crossbow',
+    weaponType: 'bow',
+    statRanges: {
+      power: [10, 16],
+      focus: [9, 15],
+      luck: [3, 7],
+    },
+  },
+
+  // HAMMERS - Very high power, moderate defense, very low focus
+  warhammer: {
+    id: 'warhammer',
+    name: 'Warhammer',
+    description: 'A devastating hammer designed to crush armor and bone.',
+    type: 'weapon',
+    icon: 'weapon-mace-warhammer',
+    weaponType: 'mace',
+    statRanges: {
+      power: [10, 16],
+      defense: [2, 5],
+      focus: [0, 1],
+    },
+  },
+  'thunder-hammer': {
+    id: 'thunder-hammer',
+    name: 'Thunder Hammer',
+    description: 'A legendary hammer that crackles with lightning.',
+    type: 'weapon',
+    icon: 'weapon-mace-thunder',
+    weaponType: 'mace',
+    statRanges: {
+      power: [14, 22],
+      defense: [3, 8],
+      focus: [1, 3],
+      luck: [2, 5],
+    },
+  },
+
+  // EXOTIC SWORDS - Unique stat distributions
+  scimitar: {
+    id: 'scimitar',
+    name: 'Scimitar',
+    description: 'A curved blade favored by desert warriors.',
+    type: 'weapon',
+    icon: 'weapon-sword-scimitar',
+    weaponType: 'sword',
+    statRanges: {
+      power: [6, 10],
+      defense: [0, 2],
+      focus: [4, 8],
+      luck: [3, 6],
+    },
+  },
+  katana: {
+    id: 'katana',
+    name: 'Katana',
+    description: 'A masterfully forged blade with exceptional sharpness.',
+    type: 'weapon',
+    icon: 'weapon-sword-katana',
+    weaponType: 'sword',
+    statRanges: {
+      power: [8, 14],
+      defense: [1, 3],
+      focus: [6, 12],
+      luck: [2, 5],
+    },
+  },
+
+  // POLEARMS - Extended reach weapons
+  glaive: {
+    id: 'glaive',
+    name: 'Glaive',
+    description: 'A single-edged blade mounted on a long pole.',
+    type: 'weapon',
+    icon: 'weapon-spear-glaive',
+    weaponType: 'spear',
+    statRanges: {
+      power: [7, 12],
+      defense: [2, 6],
+      focus: [3, 7],
+    },
+  },
+  trident: {
+    id: 'trident',
+    name: 'Trident',
+    description: 'A three-pronged spear with excellent balance.',
+    type: 'weapon',
+    icon: 'weapon-spear-trident',
+    weaponType: 'spear',
+    statRanges: {
+      power: [8, 13],
+      defense: [3, 7],
+      focus: [4, 9],
+      luck: [1, 3],
+    },
+  },
 };
 
 /**

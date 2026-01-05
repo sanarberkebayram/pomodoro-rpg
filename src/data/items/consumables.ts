@@ -314,6 +314,45 @@ export const SCROLL_OF_CLARITY: ConsumableItem = {
   },
 };
 
+// ANTIDOTES - Status effect removal (future poison mechanics)
+export const ANTIDOTE: ConsumableItem = {
+  id: 'antidote',
+  name: 'Antidote',
+  description: 'Neutralizes poisons and toxins.',
+  type: 'consumable',
+  consumableType: 'potion',
+  rarity: 'uncommon',
+  value: 30,
+  icon: 'consumable-potion-antidote',
+  sellable: true,
+  maxStack: 50,
+  healAmount: 10,
+  // Future: curesPoison property
+};
+
+// ULTIMATE CONSUMABLES - Rare and powerful
+export const REJUVENATION_ELIXIR: ConsumableItem = {
+  id: 'rejuvenation-elixir',
+  name: 'Rejuvenation Elixir',
+  description: 'A miraculous elixir that fully restores health and boosts all stats.',
+  type: 'consumable',
+  consumableType: 'elixir',
+  rarity: 'legendary',
+  value: 200,
+  icon: 'consumable-elixir-rejuvenation',
+  sellable: true,
+  maxStack: 10,
+  healAmount: 999,
+  curesInjury: true,
+  buffDuration: 60 * 60 * 1000, // 60 minutes
+  buffStats: {
+    power: 10,
+    defense: 10,
+    focus: 10,
+    luck: 10,
+  },
+};
+
 /**
  * All consumable items mapped by ID
  */
@@ -343,6 +382,10 @@ export const CONSUMABLES: Record<string, ConsumableItem> = {
   [SCROLL_OF_FORTUNE.id]: SCROLL_OF_FORTUNE,
   [SCROLL_OF_PROTECTION.id]: SCROLL_OF_PROTECTION,
   [SCROLL_OF_CLARITY.id]: SCROLL_OF_CLARITY,
+
+  // Special
+  [ANTIDOTE.id]: ANTIDOTE,
+  [REJUVENATION_ELIXIR.id]: REJUVENATION_ELIXIR,
 };
 
 /**

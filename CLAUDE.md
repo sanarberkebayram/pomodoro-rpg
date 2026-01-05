@@ -106,14 +106,14 @@ IDLE → WORK → SHORT_BREAK → WORK → SHORT_BREAK → WORK → SHORT_BREAK 
 **IMPORTANT: Always use `bun` as the package manager and runtime for this project.**
 
 ```bash
-bun install      # Install dependencies
-bun dev          # Start Vite dev server
-bun build        # Production build
-bun preview      # Preview production build
-bun run test     # Run Vitest tests
-bun run test:watch   # Watch mode
-bun lint         # ESLint
-bun format       # Prettier
+bun install          # Install dependencies
+bun dev              # Start Vite dev server
+bun build            # Production build
+bun preview          # Preview production build
+bun run test --run   # Run Vitest tests (single run)
+bun run test         # Run Vitest tests (watch mode)
+bun lint             # ESLint
+bun format           # Prettier
 ```
 
 ## Mobile-First Design Requirements
@@ -153,7 +153,12 @@ See `DEV_PLAN.md` for detailed 12-week implementation roadmap.
 
 7. **MVP Scope:** Focus on timer + 1 character class + 2 work tasks (Expedition, Raid) + basic inventory + simple dungeon. See DEV_PLAN.md Phase 0-10 for full MVP definition.
 
-8. **Test After Every Feature:** ALWAYS run `bun run test` after completing each feature implementation. Ensure all tests pass before moving to the next feature.
+8. **Code Quality After Every Feature:** ALWAYS run these commands after completing each feature implementation:
+   - `bun run test --run` - Ensure all tests pass
+   - `bun lint` - Check for and fix any linting errors
+   - `bun format` - Format code consistently with Prettier
+
+   All checks must pass before moving to the next feature.
 
 ## Git Commit Guidelines
 

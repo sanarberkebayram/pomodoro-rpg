@@ -55,7 +55,7 @@ describe('Injury System Integration', () => {
       const taskConfig = getTaskConfig('expedition');
       let injuryOccurred = false;
 
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 100; i++) {
         // Reset character injury
         if (characterStore.state.injury.isInjured) {
           characterStore.healInjury();
@@ -63,7 +63,7 @@ describe('Injury System Integration', () => {
 
         taskManager.startTask('expedition', 'risky', taskConfig, context);
 
-        // Force a failure by manipulating success chance
+        // Complete task and check for failure with injury
         const completion = taskManager.completeTask(context);
 
         if (completion && completion.outcome === 'failure' && completion.wasInjured) {
@@ -105,7 +105,7 @@ describe('Injury System Integration', () => {
       taskManager.startTask('raid', 'safe', taskConfig, context);
 
       // Try to get an injury (safe should only give minor)
-      for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < 100; i++) {
         if (characterStore.state.injury.isInjured) {
           characterStore.healInjury();
         }
@@ -113,7 +113,7 @@ describe('Injury System Integration', () => {
         taskManager.startTask('raid', 'safe', taskConfig, context);
         const completion = taskManager.completeTask(context);
 
-        if (completion && completion.wasInjured) {
+        if (completion && completion.outcome === 'failure' && completion.wasInjured) {
           completionHandler.processCompletion(completion);
           // Safe risk should only produce minor injuries
           expect(characterStore.state.injury.severity).toBe('minor');

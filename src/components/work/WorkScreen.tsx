@@ -3,10 +3,10 @@
  * Main UI for WORK phase - shows game canvas and event log
  */
 
-import { Component, createSignal, onMount, onCleanup } from 'solid-js';
+import { Component, createSignal, onCleanup, createEffect } from 'solid-js';
 import { GameCanvas } from './GameCanvas';
 import { EventLog } from './EventLog';
-import { ToastContainer } from '../common/Toast';
+import { ToastContainer, toastManager } from '../common/Toast';
 import { GameEvent } from '@/core/types/events';
 import { VisualCueRenderer } from '@/rendering/VisualCueRenderer';
 
@@ -17,8 +17,8 @@ interface WorkScreenProps {
   /** Visual cue renderer instance (optional) */
   visualCueRenderer?: VisualCueRenderer;
 
-  /** Callback when an event is generated */
-  onEventGenerated?: (event: GameEvent) => void;
+  /** Callback when a new event is added */
+  onEventAdded?: (event: GameEvent) => void;
 
   /** Custom class name */
   class?: string;
@@ -29,29 +29,41 @@ interface WorkScreenProps {
  * Combines game canvas, event log, and toast notifications
  */
 export const WorkScreen: Component<WorkScreenProps> = (props) => {
-  const [events] = createSignal<GameEvent[]>(props.events || []);
+  const [events, setEvents] = createSignal<GameEvent[]>(props.events || []);
   const [visualCueRenderer] = createSignal<VisualCueRenderer>(
     props.visualCueRenderer || new VisualCueRenderer()
   );
 
-  // Subscribe to event changes
-  onMount(() => {
-    // Listen for new events
-    // Note: Event handling is done via props, this is a placeholder for future implementation
-    // const handleNewEvent = (event: GameEvent) => {
-    //   setEvents((prev) => [...prev, event]);
-    //   showEventToast(event);
-    //   if (event.visualCue) {
-    //     visualCueRenderer().addCue(event.visualCue);
-    //   }
-    //   props.onEventGenerated?.(event);
-    // };
+  // React to prop changes and update local events
+  createEffect(() => {
+    const propEvents = props.events || [];
+    setEvents(propEvents);
+  });
 
-    // Cleanup
-    onCleanup(() => {
-      // Clear visual cues
-      visualCueRenderer().clear();
-    });
+  // Watch for new events and show notifications/visual cues
+  createEffect(() => {
+    const currentEvents = events();
+    if (currentEvents.length > 0) {
+      const latestEvent = currentEvents[currentEvents.length - 1];
+
+      // Show toast for warning/critical events
+      if (latestEvent.severity === 'warning' || latestEvent.severity === 'critical') {
+        toastManager.showFromEvent(latestEvent);
+      }
+
+      // Add visual cue if present
+      if (latestEvent.visualCue) {
+        visualCueRenderer().addCue(latestEvent.visualCue);
+      }
+
+      // Notify parent
+      props.onEventAdded?.(latestEvent);
+    }
+  });
+
+  // Cleanup
+  onCleanup(() => {
+    visualCueRenderer().clear();
   });
 
   return (

@@ -173,3 +173,27 @@ See `DEV_PLAN.md` for detailed 12-week implementation roadmap.
 - **Integration tests:** Full gameplay flows (work cycle, dungeon run, inventory management)
 - **E2E tests (Playwright):** Complete user journeys, mobile viewport testing
 - **Target:** 80% code coverage for core systems
+
+### Test Integrity Rules
+
+**CRITICAL: Do NOT modify tests to make them pass unless the test itself is wrong.**
+
+When tests fail:
+1. **First, analyze WHY the test is failing** - understand the root cause
+2. **If the implementation is wrong:** Fix the implementation, not the test
+3. **If the test expectations are wrong:** Only then modify the test, with clear justification
+4. **If timing/async issues:** Fix the underlying timing problem in the code, don't just increase retry attempts
+
+**Never:**
+- Change test assertions to be less strict just to pass
+- Add excessive retry loops to mask timing issues
+- Remove assertions that are failing
+- Lower expectations (e.g., `toBeGreaterThan(0)` when it should be a specific value)
+
+**Valid reasons to modify tests:**
+- Test has incorrect expectations (wrong expected values)
+- Test is testing the wrong behavior
+- Test setup is incorrect (mock data, initial state)
+- API/interface changed and test needs updating
+
+**When in doubt:** Ask the user before modifying tests. Tests are specifications of correct behavior.

@@ -22,18 +22,23 @@ export class EventTaskIntegration {
   private eventBank: EventBank;
   private eventGenerator: EventGenerator;
   private generatedEvents: GameEvent[] = [];
+  private baseConfig?: EventGenerationConfig;
 
   constructor(eventBank?: EventBank, config?: EventGenerationConfig) {
     this.eventBank = eventBank || new EventBank(EVENT_TEMPLATES);
     this.eventGenerator = new EventGenerator(this.eventBank, config);
+    this.baseConfig = config;
   }
 
   /**
    * Start event generation for a task
    */
   public startTaskEvents(taskType: TaskType, baseConfig?: EventGenerationConfig): void {
+    // Use provided baseConfig, or fall back to constructor config
+    const configToUse = baseConfig || this.baseConfig;
+
     // Get task-specific configuration
-    const taskConfig = getTaskEventConfig(taskType, baseConfig);
+    const taskConfig = getTaskEventConfig(taskType, configToUse);
 
     // Update generator config
     this.eventGenerator.updateConfig(taskConfig);

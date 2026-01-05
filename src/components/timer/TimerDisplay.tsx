@@ -1,9 +1,18 @@
 import { Component, createMemo } from 'solid-js';
-import type { TimerState } from '../../systems/pomodoro/types';
+import type { PomodoroPhase, TimerState } from '../../systems/pomodoro/types';
 
-interface TimerDisplayProps {
-  timerState: TimerState;
-}
+type TimerDisplayProps =
+  | {
+      timerState: TimerState;
+    }
+  | {
+      remainingSeconds: number;
+      phase: PomodoroPhase;
+      isRunning: boolean;
+      isPaused: boolean;
+      completedSessions?: number;
+      totalCompletedSessions?: number;
+    };
 
 /**
  * TimerDisplay - Large countdown display
@@ -12,11 +21,27 @@ interface TimerDisplayProps {
  * Mobile-first design with high contrast and clear typography.
  */
 export const TimerDisplay: Component<TimerDisplayProps> = (props) => {
+  const resolvedState = createMemo<TimerState>(() => {
+    if ('timerState' in props) {
+      return props.timerState;
+    }
+
+    return {
+      phase: props.phase,
+      remainingSeconds: props.remainingSeconds,
+      isRunning: props.isRunning,
+      isPaused: props.isPaused,
+      completedSessions: props.completedSessions ?? 0,
+      totalCompletedSessions: props.totalCompletedSessions ?? 0,
+      lastUpdateTimestamp: Date.now(),
+    };
+  });
+
   /**
    * Format seconds into MM:SS display
    */
   const formattedTime = createMemo(() => {
-    const totalSeconds = props.timerState.remainingSeconds;
+    const totalSeconds = resolvedState().remainingSeconds;
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
 
@@ -30,7 +55,7 @@ export const TimerDisplay: Component<TimerDisplayProps> = (props) => {
    * Determine if timer is in critical state (< 1 minute remaining)
    */
   const isCritical = createMemo(() => {
-    return props.timerState.remainingSeconds < 60 && props.timerState.isRunning;
+    return resolvedState().remainingSeconds < 60 && resolvedState().isRunning;
   });
 
   /**
@@ -41,7 +66,7 @@ export const TimerDisplay: Component<TimerDisplayProps> = (props) => {
       return 'text-red-600';
     }
 
-    switch (props.timerState.phase) {
+    switch (resolvedState().phase) {
       case 'WORK':
         return 'text-blue-600';
       case 'SHORT_BREAK':
@@ -75,7 +100,7 @@ export const TimerDisplay: Component<TimerDisplayProps> = (props) => {
       </div>
 
       {/* Pause indicator */}
-      {props.timerState.isPaused && (
+      {resolvedState().isPaused && (
         <div
           class="
             mt-4
@@ -95,7 +120,7 @@ export const TimerDisplay: Component<TimerDisplayProps> = (props) => {
       )}
 
       {/* Session counter - shows completed work sessions */}
-      {props.timerState.phase !== 'IDLE' && (
+      {resolvedState().phase !== 'IDLE' && (
         <div
           class="
             mt-6
@@ -103,9 +128,9 @@ export const TimerDisplay: Component<TimerDisplayProps> = (props) => {
             text-gray-500
             font-medium
           "
-          aria-label={`${props.timerState.completedSessions} of ${props.timerState.totalCompletedSessions} work sessions completed`}
+          aria-label={`${resolvedState().completedSessions} of ${resolvedState().totalCompletedSessions} work sessions completed`}
         >
-          Session {props.timerState.completedSessions + 1}
+          Session {resolvedState().completedSessions + 1}
         </div>
       )}
     </div>

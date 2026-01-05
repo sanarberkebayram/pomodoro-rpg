@@ -17,6 +17,7 @@ interface CharacterSheetProps {
   inventoryStore: InventoryStore;
   /** Whether interface is locked (during work phase) */
   locked?: boolean;
+  onClose?: () => void;
 }
 
 type TabType = 'stats' | 'equipment' | 'inventory';
@@ -124,9 +125,21 @@ export const CharacterSheet: Component<CharacterSheetProps> = (props) => {
             <h1 class="text-2xl font-bold">{characterState().class}</h1>
             <p class="text-sm opacity-90">Level {characterState().level}</p>
           </div>
-          <div class="text-right">
-            <p class="text-xs opacity-75">Tasks Completed</p>
-            <p class="text-xl font-bold">{characterState().metadata.tasksCompleted}</p>
+          <div class="flex items-center gap-4">
+            <div class="text-right">
+              <p class="text-xs opacity-75">Tasks Completed</p>
+              <p class="text-xl font-bold">{characterState().metadata.tasksCompleted}</p>
+            </div>
+            <Show when={props.onClose}>
+              <button
+                onClick={props.onClose}
+                class="text-white/80 hover:text-white text-2xl leading-none"
+                disabled={props.locked}
+                aria-label="Close character sheet"
+              >
+                ×
+              </button>
+            </Show>
           </div>
         </div>
 

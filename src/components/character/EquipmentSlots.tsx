@@ -1,15 +1,9 @@
-/**
- * EquipmentSlots Component
- * Displays character equipment slots with drag-and-drop equipping
- */
-
 import { Component, Show, For, createSignal } from 'solid-js';
 import type { CharacterStore } from '../../core/state/CharacterState';
 import type { InventoryStore } from '../../core/state/InventoryState';
 import type { EquippableItem, Item } from '../../core/types/items';
 import type { EquipmentSlot } from '../../core/types/character';
 import { ItemCard } from '../common/ItemCard';
-import { ItemTooltip } from '../common/ItemTooltip';
 import { getEquipmentBonuses } from '../../core/utils/itemUtils';
 
 interface EquipmentSlotsProps {
@@ -22,7 +16,7 @@ interface EquipmentSlotsProps {
 }
 
 /**
- * Slot display configuration
+ * Slot display configuration for the modern theme
  */
 const SLOT_CONFIG: Record<
   EquipmentSlot,
@@ -33,65 +27,53 @@ const SLOT_CONFIG: Record<
   }
 > = {
   weapon: {
-    label: 'Weapon',
+    label: 'Main Hand',
     icon: '⚔️',
-    description: 'Main hand weapon for attacks',
+    description: 'Strike with the force of legends',
   },
   armor: {
-    label: 'Armor',
+    label: 'Body Armor',
     icon: '🛡️',
-    description: 'Body armor for defense',
+    description: 'Warded against the darkness',
   },
   accessory: {
-    label: 'Accessory',
+    label: 'Mystic Accessory',
     icon: '💍',
-    description: 'Special item with unique bonuses',
+    description: 'Enchanted auxiliary power',
   },
 };
 
 /**
- * EquipmentSlots - Character equipment display with drag-and-drop
+ * EquipmentSlots - Fantasy RPG character equipment display
  */
 export const EquipmentSlots: Component<EquipmentSlotsProps> = (props) => {
-  const [selectedSlot, setSelectedSlot] = createSignal<EquipmentSlot | null>(null);
   const [dragOverSlot, setDragOverSlot] = createSignal<EquipmentSlot | null>(null);
 
   const characterState = () => props.characterStore.state;
   const inventoryState = () => props.inventoryStore.state;
 
-  /**
-   * Get equipped item for a slot
-   */
   const getEquippedItem = (slot: EquipmentSlot): Item | null => {
     const equipment = characterState().equipment[slot];
     if (!equipment) return null;
-
     return props.inventoryStore.getItem(equipment.itemId);
   };
 
-  /**
-   * Handle unequip action
-   */
   const handleUnequip = (slot: EquipmentSlot) => {
     if (props.locked) return;
-
     const unequipped = props.characterStore.unequipItem(slot);
-    if (unequipped) {
-      props.onUnequip?.(slot);
-    }
-    setSelectedSlot(null);
+    if (unequipped) props.onUnequip?.(slot);
 
-    // Recalculate stats with updated equipment
-    const equipmentBonuses = getEquipmentBonuses(characterState().equipment, inventoryState());
-    props.characterStore.recalculateStats(equipmentBonuses);
+    const partialBonuses = getEquipmentBonuses(characterState().equipment, inventoryState());
+    props.characterStore.recalculateStats({
+      power: partialBonuses.power ?? 0,
+      defense: partialBonuses.defense ?? 0,
+      focus: partialBonuses.focus ?? 0,
+      luck: partialBonuses.luck ?? 0,
+    });
   };
 
-  /**
-   * Handle equip action from inventory drag-and-drop
-   */
   const handleDrop = (slot: EquipmentSlot) => (e: DragEvent) => {
     if (props.locked) return;
-
     e.preventDefault();
     const sourceSlotId = e.dataTransfer?.getData('text/plain');
 
@@ -99,189 +81,163 @@ export const EquipmentSlots: Component<EquipmentSlotsProps> = (props) => {
       const sourceSlot = inventoryState().slots.find((s) => s.slotId === sourceSlotId);
       const item = sourceSlot?.item as EquippableItem | undefined;
 
-      // Check if item can be equipped in this slot
       if (item && item.equipmentSlot === slot) {
-        // Unequip current item if any
         const currentEquipment = characterState().equipment[slot];
-        if (currentEquipment) {
-          props.characterStore.unequipItem(slot);
-        }
-
-        // Equip new item
+        if (currentEquipment) props.characterStore.unequipItem(slot);
         props.characterStore.equipItem(slot, item.id);
 
-        // Recalculate stats
-        const equipmentBonuses = getEquipmentBonuses(characterState().equipment, inventoryState());
-        props.characterStore.recalculateStats(equipmentBonuses);
+        const partialBonuses = getEquipmentBonuses(characterState().equipment, inventoryState());
+        props.characterStore.recalculateStats({
+          power: partialBonuses.power ?? 0,
+          defense: partialBonuses.defense ?? 0,
+          focus: partialBonuses.focus ?? 0,
+          luck: partialBonuses.luck ?? 0,
+        });
       }
     }
-
     setDragOverSlot(null);
   };
 
-  /**
-   * Handle drag over
-   */
   const handleDragOver = (slot: EquipmentSlot) => (e: DragEvent) => {
     if (props.locked) return;
-
     e.preventDefault();
     setDragOverSlot(slot);
-
-    if (e.dataTransfer) {
-      e.dataTransfer.dropEffect = 'copy';
-    }
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
   };
 
-  /**
-   * Handle drag leave
-   */
-  const handleDragLeave = () => {
-    setDragOverSlot(null);
-  };
+  const handleDragLeave = () => setDragOverSlot(null);
 
-  /**
-   * Equipment slots to render
-   */
-  const slots: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
   return (
-    <div class="flex flex-col h-full">
-      {/* Header */}
-      <div class="bg-gradient-to-r from-purple-50 to-purple-100 border-b-2 border-purple-300 px-4 py-3">
-        <h2 class="text-lg font-bold text-gray-800">Equipment</h2>
-        <p class="text-sm text-gray-600">Drag items from inventory to equip</p>
+    <div class="flex flex-col h-full bg-[#050508]/40 overflow-hidden">
+
+      {/* Classic MMO Gear Board */}
+      <div class="flex-1 relative px-12 py-8 flex items-center justify-between gap-12 min-h-[480px]">
+        {/* Background Ambience */}
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.08)_0%,transparent_70%)] opacity-50 pointer-events-none"></div>
+
+        {/* LEFT: Character Profile & Labels */}
+        <div class="flex-1 flex flex-col items-center justify-center relative">
+          <div class="w-64 h-80 relative flex items-center justify-center mb-6">
+            {/* Stylized Silhouette & Glows */}
+            <div class="absolute inset-0 bg-gradient-to-t from-primary-500/30 via-primary-500/5 to-transparent blur-3xl opacity-40 animate-pulse"></div>
+            <div class="text-[12rem] text-white/5 font-display italic font-black select-none pointer-events-none transform -rotate-12 translate-y-6">
+              {characterState().class.charAt(0)}
+            </div>
+
+            {/* Glowing Aura Rings */}
+            <div class="absolute inset-0 border border-primary-500/5 rounded-full scale-125 animate-ping opacity-20"></div>
+          </div>
+
+          {/* Profile Labels (Bottom of Character) */}
+          <div class="text-center space-y-2 relative z-10 w-full">
+            <div class="flex items-center justify-center gap-4 mb-2">
+              <div class="h-px bg-gradient-to-r from-transparent via-primary-500/30 to-transparent flex-1"></div>
+              <span class="text-[10px] font-mono font-black text-primary-500/60 uppercase tracking-[0.4em]">Spirit Signature</span>
+              <div class="h-px bg-gradient-to-r from-transparent via-primary-500/30 to-transparent flex-1"></div>
+            </div>
+            <h3 class="text-4xl font-display font-black text-white italic uppercase tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] leading-none">
+              {characterState().class}
+            </h3>
+            <div class="flex items-center justify-center gap-3">
+              <span class="text-xs font-mono font-bold text-gray-500 uppercase tracking-widest">Ascension Level</span>
+              <span class="text-xl font-display font-black text-primary-400">0{characterState().level}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT: Equipment Slot Vertical Stack */}
+        <div class="flex flex-col gap-5 flex-shrink-0 relative z-20">
+          {renderMmoSlot('weapon', 'Main Hand')}
+          {renderMmoSlot('armor', 'Body Armor')}
+          {renderMmoSlot('accessory', 'Relic Slot')}
+        </div>
       </div>
 
-      {/* Locked overlay */}
-      <Show when={props.locked}>
-        <div class="bg-red-100 border-b-2 border-red-300 px-4 py-2">
-          <p class="text-sm text-red-700 font-semibold text-center">
-            🔒 Equipment locked during work phase
-          </p>
-        </div>
-      </Show>
-
-      {/* Equipment slots */}
-      <div class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
-        <For each={slots}>
-          {(slot) => {
-            const config = SLOT_CONFIG[slot];
-            const equippedItem = () => getEquippedItem(slot);
-            const isSelected = () => selectedSlot() === slot;
-            const isDragOver = () => dragOverSlot() === slot;
-
-            return (
-              <div
-                class={`
-                  border-2
-                  rounded-lg
-                  p-4
-                  bg-white
-                  transition-all
-                  ${isDragOver() ? 'border-blue-500 bg-blue-50 scale-105' : 'border-gray-300'}
-                  ${isSelected() ? 'ring-2 ring-purple-500' : ''}
-                `}
-                onDragOver={handleDragOver(slot)}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop(slot)}
-              >
-                {/* Slot header */}
-                <div class="flex items-center justify-between mb-3">
-                  <div class="flex items-center gap-2">
-                    <span class="text-2xl" aria-hidden="true">
-                      {config.icon}
-                    </span>
-                    <div>
-                      <h3 class="font-bold text-gray-800">{config.label}</h3>
-                      <p class="text-xs text-gray-500">{config.description}</p>
+      {/* Stat Summary Footer */}
+      <div class="px-8 py-5 border-t border-primary-500/10 bg-black/40 backdrop-blur-md">
+        <div class="flex items-center justify-between gap-8">
+          <div class="flex items-center gap-6 overflow-x-auto no-scrollbar py-1">
+            <For each={Object.entries(characterState().computedStats)}>
+              {([stat, value]) => {
+                if (stat === 'health' || stat === 'maxHealth') return null;
+                const icon = stat === 'power' ? '⚔️' : stat === 'defense' ? '🛡️' : stat === 'focus' ? '🎯' : '🍀';
+                return (
+                  <div class="flex flex-col">
+                    <span class="text-[8px] font-mono font-black text-gray-500 uppercase tracking-widest">{stat}</span>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs">{icon}</span>
+                      <span class="text-sm font-mono font-black text-white">{Math.floor(value)}</span>
                     </div>
                   </div>
-                </div>
-
-                {/* Item display or empty slot */}
-                <div class="flex items-center gap-4">
-                  <Show
-                    when={equippedItem()}
-                    fallback={
-                      <div
-                        class="
-                          w-full
-                          border-2
-                          border-dashed
-                          border-gray-300
-                          rounded-lg
-                          p-8
-                          text-center
-                          text-gray-400
-                        "
-                      >
-                        <p class="text-sm">No {config.label.toLowerCase()} equipped</p>
-                        <p class="text-xs mt-1">Drag item here to equip</p>
-                      </div>
-                    }
-                  >
-                    {(item) => (
-                      <div class="flex items-center gap-4 w-full">
-                        <ItemCard item={item()} size="lg" />
-                        <div class="flex-1 min-w-0">
-                          <h4 class="font-semibold text-gray-800 truncate">{item().name}</h4>
-                          <p class="text-xs text-gray-500 capitalize">{item().rarity}</p>
-
-                          {/* Quick stats */}
-                          <Show when={item().type !== 'consumable'}>
-                            <div class="mt-2 space-y-1">
-                              <For each={Object.entries((item() as EquippableItem).statBonuses)}>
-                                {([stat, value]) =>
-                                  value ? (
-                                    <div class="text-xs text-green-600 font-medium">
-                                      +{value} {stat}
-                                    </div>
-                                  ) : null
-                                }
-                              </For>
-                            </div>
-                          </Show>
-
-                          {/* Unequip button */}
-                          <button
-                            class="
-                              mt-2
-                              px-3
-                              py-1
-                              text-xs
-                              bg-red-100
-                              text-red-700
-                              rounded
-                              hover:bg-red-200
-                              transition-colors
-                              disabled:opacity-50
-                              disabled:cursor-not-allowed
-                            "
-                            disabled={props.locked}
-                            onClick={() => handleUnequip(slot)}
-                          >
-                            Unequip
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </Show>
-                </div>
-
-                {/* Item tooltip on selection */}
-                <Show when={isSelected() && equippedItem()}>
-                  {(item) => (
-                    <div class="mt-4">
-                      <ItemTooltip item={item()} />
-                    </div>
-                  )}
-                </Show>
-              </div>
-            );
-          }}
-        </For>
+                );
+              }}
+            </For>
+          </div>
+          <div class="flex-shrink-0">
+            <span class="text-[9px] font-mono font-black text-emerald-500 bg-emerald-500/5 px-3 py-1 rounded border border-emerald-500/20 uppercase tracking-widest">
+              Combat Potency Balanced
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
+
+  function renderMmoSlot(slot: EquipmentSlot, label: string) {
+    const config = SLOT_CONFIG[slot];
+    const equippedItem = () => getEquippedItem(slot);
+    const isDragOver = () => dragOverSlot() === slot;
+
+    return (
+      <div
+        class={`flex flex-col items-center gap-2 group cursor-default p-2 transition-all duration-300 ${isDragOver() ? 'scale-110' : 'hover:scale-105'}`}
+        onDragOver={handleDragOver(slot)}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop(slot)}
+      >
+        <div
+          class={`
+            relative w-20 h-20 rounded-2xl border-2 flex items-center justify-center transition-all duration-500 overflow-hidden
+            ${isDragOver()
+              ? 'border-primary-500 bg-primary-500/20 shadow-[0_0_30px_rgba(245,158,11,0.4)]'
+              : equippedItem()
+                ? 'border-primary-500/40 bg-black/60 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]'
+                : 'border-white/5 bg-white/2 opacity-40 hover:opacity-100 hover:border-white/20'
+            }
+          `}
+        >
+          <Show
+            when={equippedItem()}
+            fallback={<span class="text-3xl grayscale opacity-30 select-none">{config.icon}</span>}
+          >
+            {(item) => (
+              <div class="relative w-full h-full flex items-center justify-center group/item">
+                <ItemCard item={item()} size="lg" />
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleUnequip(slot); }}
+                  class="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-danger text-white text-[10px] flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity border border-white/20 shadow-lg hover:scale-110"
+                  title="Unequip"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+          </Show>
+
+          {/* Animated Scan Line (on drag or if equipped) */}
+          <Show when={isDragOver() || equippedItem()}>
+            <div class={`absolute inset-0 bg-gradient-to-b from-transparent via-primary-500/10 to-transparent h-[200%] ${isDragOver() ? 'animate-scan' : ''} pointer-events-none`}></div>
+          </Show>
+        </div>
+
+        <div class="text-center">
+          <span class="block text-[9px] font-display font-black text-gray-500 uppercase tracking-widest">{label}</span>
+          <Show when={equippedItem()}>
+            {(item) => <span class="block text-[8px] font-mono font-bold text-primary-400 mt-0.5 max-w-[80px] truncate">{item().name}</span>}
+          </Show>
+        </div>
+      </div>
+    );
+  }
 };

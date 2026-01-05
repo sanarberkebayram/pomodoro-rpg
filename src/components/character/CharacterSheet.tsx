@@ -1,13 +1,7 @@
-/**
- * CharacterSheet Component
- * Complete character management interface combining stats, equipment, and inventory
- */
-
 import { Component, Show, createSignal } from 'solid-js';
 import type { CharacterStore } from '../../core/state/CharacterState';
 import type { InventoryStore } from '../../core/state/InventoryState';
 import type { Item, EquippableItem, ConsumableItem } from '../../core/types/items';
-import { StatDisplay } from './StatDisplay';
 import { EquipmentSlots } from './EquipmentSlots';
 import { Inventory } from './Inventory';
 import { getEquipmentBonuses, isEquippableItem } from '../../core/utils/itemUtils';
@@ -20,252 +14,135 @@ interface CharacterSheetProps {
   onClose?: () => void;
 }
 
-type TabType = 'stats' | 'equipment' | 'inventory';
 
 /**
- * CharacterSheet - Main character management interface
+ * CharacterSheet - Main character management interface with modern dark theme
  */
 export const CharacterSheet: Component<CharacterSheetProps> = (props) => {
-  const [activeTab, setActiveTab] = createSignal<TabType>('stats');
+  const [activeTab, setActiveTab] = createSignal<'hero' | 'vault'>('hero');
   const [notification, setNotification] = createSignal<string | null>(null);
 
   const characterState = () => props.characterStore.state;
 
-  /**
-   * Show notification message briefly
-   */
   const showNotification = (message: string) => {
     setNotification(message);
     setTimeout(() => setNotification(null), 3000);
   };
 
-  /**
-   * Handle item selection from inventory
-   */
-  const handleItemSelect = (_item: Item, _slotId: string) => {
-    // Just for visual feedback, could extend with more functionality
-    // Item selected for future interactions
-  };
-
-  /**
-   * Handle item use/equip from inventory
-   */
   const handleItemUse = (item: Item, _slotId: string) => {
     if (props.locked) {
-      showNotification('❌ Cannot use items during work phase');
+      showNotification('❌ Focus Sealed: Expedition in Progress');
       return;
     }
 
-    // Equip if it's equippable
     if (isEquippableItem(item)) {
       const equippableItem = item as EquippableItem;
       const slot = equippableItem.equipmentSlot;
 
-      // Unequip current item if any
       const currentEquipment = characterState().equipment[slot];
-      if (currentEquipment) {
-        props.characterStore.unequipItem(slot);
-      }
+      if (currentEquipment) props.characterStore.unequipItem(slot);
 
-      // Equip new item
       props.characterStore.equipItem(slot, item.id);
 
-      // Recalculate stats
-      const equipmentBonuses = getEquipmentBonuses(
+      const partialBonuses = getEquipmentBonuses(
         characterState().equipment,
         props.inventoryStore.state
       );
-      props.characterStore.recalculateStats(equipmentBonuses);
 
-      showNotification(`✅ Equipped ${item.name}`);
-      setActiveTab('equipment'); // Switch to equipment tab to show result
-    }
-    // Use if it's a consumable
-    else if (item.type === 'consumable') {
+      props.characterStore.recalculateStats({
+        power: partialBonuses.power ?? 0,
+        defense: partialBonuses.defense ?? 0,
+        focus: partialBonuses.focus ?? 0,
+        luck: partialBonuses.luck ?? 0,
+      });
+
+      showNotification(`⚔️ Relic Bound: ${item.name}`);
+    } else if (item.type === 'consumable') {
       const consumable = item as ConsumableItem;
-
-      // Apply healing
       if (consumable.healAmount) {
         props.characterStore.heal(consumable.healAmount);
-        showNotification(`✅ Restored ${consumable.healAmount} health`);
+        showNotification(`🧪 Vitality Restored: +${consumable.healAmount}`);
       }
-
-      // Cure injury
       if (consumable.curesInjury && characterState().injury.isInjured) {
         props.characterStore.healInjury();
-        showNotification(`✅ Injury healed!`);
+        showNotification(`✨ Spirit Cleansed: Injury Healed`);
       }
-
-      // Apply stat buffs (would need status effect system)
-      if (consumable.buffStats) {
-        // TODO: Implement status effect system for temporary buffs
-        showNotification(`✅ Gained temporary buffs!`);
-      }
-
-      // Remove consumable from inventory
       props.inventoryStore.removeItem(item.id, 1);
     }
   };
 
-  /**
-   * Tab configuration
-   */
-  const tabs: Array<{ id: TabType; label: string; icon: string }> = [
-    { id: 'stats', label: 'Stats', icon: '📊' },
-    { id: 'equipment', label: 'Equipment', icon: '⚔️' },
-    { id: 'inventory', label: 'Inventory', icon: '🎒' },
-  ];
-
   return (
-    <div class="flex flex-col h-full bg-gray-50">
-      {/* Header with character info */}
-      <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-4 shadow-lg">
-        <div class="flex items-center justify-between">
+    <div class="flex flex-col h-[85vh] w-[90vw] max-w-5xl bg-[#080810]/98 text-gray-200 overflow-hidden animate-fade-in border border-primary-500/10 rounded-3xl shadow-[0_30px_60px_rgba(0,0,0,0.9)]">
+      {/* Cinematic Header */}
+      <div class="px-8 py-6 bg-gradient-to-b from-primary-500/10 to-transparent relative border-b border-white/5 drag-handle cursor-grab active:cursor-grabbing flex items-center justify-between">
+        <div class="flex items-center gap-6">
+          <div class="w-16 h-16 rounded-2xl bg-black/40 border border-primary-500/20 flex items-center justify-center text-4xl shadow-[inner_0_0_15px_rgba(245,158,11,0.2)]">
+            👤
+          </div>
           <div>
-            <h1 class="text-2xl font-bold">{characterState().class}</h1>
-            <p class="text-sm opacity-90">Level {characterState().level}</p>
-          </div>
-          <div class="flex items-center gap-4">
-            <div class="text-right">
-              <p class="text-xs opacity-75">Tasks Completed</p>
-              <p class="text-xl font-bold">{characterState().metadata.tasksCompleted}</p>
+            <div class="flex items-center gap-3">
+              <h1 class="text-3xl font-display font-black tracking-tighter uppercase italic text-primary-500 leading-none">{characterState().class}</h1>
+              <span class="px-3 py-1 rounded bg-primary-500/10 border border-primary-500/20 text-[10px] font-mono font-black text-primary-400 uppercase tracking-widest font-display">Lv. {characterState().level}</span>
             </div>
-            <Show when={props.onClose}>
-              <button
-                onClick={props.onClose}
-                class="text-white/80 hover:text-white text-2xl leading-none"
-                disabled={props.locked}
-                aria-label="Close character sheet"
-              >
-                ×
-              </button>
-            </Show>
+            <p class="text-[9px] font-mono text-gray-500 uppercase tracking-[0.4em] mt-1">Sovereign of the Eternal Pacts</p>
           </div>
         </div>
 
-        {/* Injury warning */}
-        <Show when={characterState().injury.isInjured}>
-          <div class="mt-2 bg-red-500 bg-opacity-90 rounded px-3 py-2 text-sm font-semibold">
-            ⚠️ Injured ({characterState().injury.severity}) - Success penalty:{' '}
-            {characterState().injury.successPenalty}%
+        <div class="flex items-center gap-8">
+          <div class="hidden md:flex flex-col items-end">
+            <span class="text-[8px] font-mono font-black text-gray-600 uppercase tracking-widest">Victory Records</span>
+            <span class="text-xl font-mono font-black text-white">{characterState().metadata.tasksCompleted} <span class="text-gray-700">/</span> {characterState().metadata.tasksFailed}</span>
           </div>
-        </Show>
-
-        {/* Hospital bill warning */}
-        <Show when={characterState().hospitalBill}>
-          <div class="mt-2 bg-yellow-500 bg-opacity-90 rounded px-3 py-2 text-sm font-semibold">
-            💰 Hospital Bill: {characterState().hospitalBill?.amount} Gold
-          </div>
-        </Show>
-      </div>
-
-      {/* Tab navigation */}
-      <div class="flex border-b-2 border-gray-300 bg-white shadow-sm">
-        {tabs.map((tab) => (
-          <button
-            class={`
-              flex-1
-              px-4
-              py-3
-              font-semibold
-              transition-all
-              ${
-                activeTab() === tab.id
-                  ? 'bg-indigo-50 text-indigo-600 border-b-4 border-indigo-600'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }
-            `}
-            onClick={() => setActiveTab(tab.id)}
-            aria-current={activeTab() === tab.id ? 'page' : undefined}
-          >
-            <span class="mr-2">{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Notification toast */}
-      <Show when={notification()}>
-        <div
-          class="
-            fixed
-            top-4
-            right-4
-            bg-gray-900
-            text-white
-            px-4
-            py-3
-            rounded-lg
-            shadow-xl
-            z-50
-            animate-slide-in-right
-          "
-          role="status"
-          aria-live="polite"
-        >
-          {notification()}
+          <Show when={props.onClose}>
+            <button
+              onClick={props.onClose}
+              class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-danger/20 hover:border-danger/30 hover:text-danger transition-all duration-300"
+            >
+              <span class="text-xl">×</span>
+            </button>
+          </Show>
         </div>
-      </Show>
+      </div>
 
-      {/* Tab content */}
-      <div class="flex-1 overflow-hidden">
-        <Show when={activeTab() === 'stats'}>
-          <div class="h-full overflow-y-auto p-4">
-            <StatDisplay
-              baseStats={characterState().baseStats}
-              computedStats={characterState().computedStats}
-              detailed={true}
-              layout="vertical"
-            />
-
-            {/* Additional info */}
-            <div class="mt-6 space-y-3">
-              <div class="bg-white border-2 border-gray-300 rounded-lg p-4">
-                <h3 class="font-bold text-gray-800 mb-2">Character Info</h3>
-                <div class="space-y-2 text-sm">
-                  <div class="flex justify-between">
-                    <span class="text-gray-600">Class:</span>
-                    <span class="font-semibold">{characterState().class}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-600">Level:</span>
-                    <span class="font-semibold">{characterState().level}</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-600">Tasks Completed:</span>
-                    <span class="font-semibold text-green-600">
-                      {characterState().metadata.tasksCompleted}
-                    </span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-600">Tasks Failed:</span>
-                    <span class="font-semibold text-red-600">
-                      {characterState().metadata.tasksFailed}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* Dual Pane Layout */}
+      <div class="flex-1 flex overflow-hidden">
+        {/* Left Pane: Gear (Hero) - Always visible on desktop, tabbed on mobile */}
+        <div class={`flex-1 md:flex-none md:w-[450px] flex flex-col border-r border-white/5 bg-black/20 ${activeTab() === 'hero' ? 'flex' : 'hidden md:flex'}`}>
+          <div class="md:hidden flex bg-black/40 border-b border-white/5">
+            <button onClick={() => setActiveTab('hero')} class={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest ${activeTab() === 'hero' ? 'text-primary-500 border-b-2 border-primary-500' : 'text-gray-500'}`}>Hero</button>
+            <button onClick={() => setActiveTab('vault')} class={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest ${activeTab() === 'vault' ? 'text-primary-500 border-b-2 border-primary-500' : 'text-gray-500'}`}>Vault</button>
           </div>
-        </Show>
-
-        <Show when={activeTab() === 'equipment'}>
           <EquipmentSlots
             characterStore={props.characterStore}
             inventoryStore={props.inventoryStore}
             locked={props.locked}
           />
-        </Show>
+        </div>
 
-        <Show when={activeTab() === 'inventory'}>
+        {/* Right Pane: Inventory (Vault) - Always visible on desktop, tabbed on mobile */}
+        <div class={`flex-1 flex flex-col bg-[#050508]/20 ${activeTab() === 'vault' ? 'flex' : 'hidden md:flex'}`}>
+          <div class="md:hidden flex bg-black/40 border-b border-white/5">
+            <button onClick={() => setActiveTab('hero')} class={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest ${activeTab() === 'hero' ? 'text-primary-500 border-b-2 border-primary-500' : 'text-gray-500'}`}>Hero</button>
+            <button onClick={() => setActiveTab('vault')} class={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest ${activeTab() === 'vault' ? 'text-primary-500 border-b-2 border-primary-500' : 'text-gray-500'}`}>Vault</button>
+          </div>
           <Inventory
             inventoryStore={props.inventoryStore}
-            onItemSelect={handleItemSelect}
             onItemUse={handleItemUse}
             locked={props.locked}
+            onClose={props.onClose}
           />
-        </Show>
+        </div>
       </div>
+
+      {/* Notifications */}
+      <Show when={notification()}>
+        <div class="fixed top-24 left-1/2 -translate-x-1/2 z-[100] pointer-events-none">
+          <div class="bg-black/95 backdrop-blur-2xl border border-primary-500/40 text-primary-400 px-8 py-4 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.8)] animate-slide-up flex items-center gap-4">
+            <div class="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse"></div>
+            <span class="text-[10px] font-display font-black uppercase tracking-[0.2em]">{notification()}</span>
+          </div>
+        </div>
+      </Show>
     </div>
   );
 };

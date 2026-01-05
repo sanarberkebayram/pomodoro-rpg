@@ -65,37 +65,44 @@ export const ItemShowcase: Component<ItemShowcaseProps> = (props) => {
   };
 
   return (
-    <div class="space-y-6 animate-fade-in">
+    <div class="space-y-8 animate-fade-in py-4">
       {/* Success Banner */}
       <div
         class={`
-          p-6
-          rounded-lg
+          p-10
+          rounded-3xl
           text-center
-          ${
-            props.result.wasLucky
-              ? 'bg-gradient-to-r from-yellow-400 to-orange-400'
-              : 'bg-gradient-to-r from-green-400 to-blue-400'
+          relative
+          overflow-hidden
+          ${props.result.wasLucky
+            ? 'bg-gradient-to-br from-primary-600 to-amber-700'
+            : 'bg-gradient-to-br from-emerald-700 to-teal-900 border border-emerald-500/20'
           }
           text-white
+          shadow-[0_20px_50px_rgba(0,0,0,0.5)]
         `}
       >
-        <h3 class="text-2xl font-bold mb-2">
-          {props.result.wasLucky ? '✨ Lucky Opening! ✨' : '🎉 Chest Opened! 🎉'}
+        <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+          <div class="absolute top-0 left-0 w-full h-1 bg-white/20"></div>
+          <div class="absolute bottom-0 left-0 w-full h-1 bg-black/20"></div>
+        </div>
+
+        <h3 class="text-4xl font-display font-black mb-2 uppercase tracking-tighter italic">
+          {props.result.wasLucky ? '✨ Divine Fortune ✨' : '⚔️ Spoils Secured ⚔️'}
         </h3>
-        <p class="text-lg">
-          Total Value: <span class="font-bold">{props.result.totalValue} gold</span>
+        <p class="text-sm font-mono text-white/70 uppercase tracking-widest">
+          Total Value Gained: <span class="font-bold text-white">{props.result.totalValue} Gold</span>
         </p>
       </div>
 
       {/* Gold Display */}
       <Show when={props.result.gold > 0}>
-        <div class="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="text-4xl">💰</div>
+        <div class="bg-black/40 border border-primary-500/10 rounded-3xl p-6 flex items-center justify-between shadow-inner">
+          <div class="flex items-center gap-6">
+            <div class="text-5xl drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">💰</div>
             <div>
-              <div class="text-sm text-gray-600">Gold Earned</div>
-              <div class="text-2xl font-bold text-yellow-600">+{props.result.gold}</div>
+              <div class="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Imperial Credits</div>
+              <div class="text-3xl font-display font-black text-primary-500">+{props.result.gold} GOLD</div>
             </div>
           </div>
         </div>
@@ -103,11 +110,11 @@ export const ItemShowcase: Component<ItemShowcaseProps> = (props) => {
 
       {/* Items Display */}
       <Show when={props.result.items.length > 0}>
-        <div>
-          <h4 class="text-lg font-semibold mb-3 text-gray-800">
-            Items ({props.result.items.length})
+        <div class="space-y-4">
+          <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 pb-2">
+            Acquired Relics ({props.result.items.length})
           </h4>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
             <For each={props.result.items}>
               {(item) => (
                 <ItemShowcaseCard
@@ -126,64 +133,51 @@ export const ItemShowcase: Component<ItemShowcaseProps> = (props) => {
         </div>
       </Show>
 
-      {/* Item Comparison Modal */}
-      <Show when={showComparison() && selectedItem() !== null}>
-        {() => {
-          const item = selectedItem();
-          if (!item || !isEquippable(item)) return null;
-          return (
-            <ItemComparison
-              newItem={item as EquippableItem}
-              equippedItem={getEquippedItem(item)}
-              onEquip={() => handleQuickEquip(item)}
-              onClose={() => {
-                setShowComparison(false);
-                setSelectedItem(null);
-              }}
-            />
-          );
-        }}
-      </Show>
-
       {/* Action Buttons */}
-      <div class="flex gap-4 pt-4 border-t-2 border-gray-200">
+      <div class="flex gap-6 pt-10 border-t border-white/5">
         <button
           onClick={props.onCollect}
-          class="
-            flex-1
-            py-3
-            px-6
-            rounded-lg
-            font-bold
-            text-white
-            bg-gradient-to-r
-            from-green-600
-            to-blue-600
-            hover:from-green-700
-            hover:to-blue-700
-            active:scale-95
-            transition-all
-          "
+          class="btn-primary flex-1 py-5 text-base font-black shadow-[0_0_30px_rgba(245,158,11,0.2)]"
         >
-          Collect Loot
+          CLAIM ALL SPOILS
         </button>
         <button
           onClick={props.onOpenAnother}
           class="
-            py-3
-            px-6
-            rounded-lg
-            font-semibold
-            text-gray-700
-            bg-gray-200
-            hover:bg-gray-300
-            active:scale-95
+            px-10
+            py-5
+            rounded-2xl
+            font-bold
+            text-gray-400
+            bg-white/5
+            border
+            border-white/10
+            hover:text-white
+            hover:bg-white/10
             transition-all
+            uppercase
+            text-sm
+            tracking-widest
           "
         >
-          Open Another
+          Seek More
         </button>
       </div>
+
+      {/* Item Comparison Modal */}
+      <Show when={showComparison() ? selectedItem() : null}>
+        {(item) => (
+          <ItemComparison
+            newItem={item() as EquippableItem}
+            equippedItem={getEquippedItem(item())}
+            onEquip={() => handleQuickEquip(item())}
+            onClose={() => {
+              setShowComparison(false);
+              setSelectedItem(null);
+            }}
+          />
+        )}
+      </Show>
     </div>
   );
 };
@@ -206,42 +200,32 @@ const ItemShowcaseCard: Component<{
   return (
     <div
       class={`
-        relative
-        bg-white
-        rounded-lg
-        border-2
-        transition-all
-        duration-200
-        ${
-          props.selected
-            ? 'border-blue-500 shadow-lg scale-105'
-            : 'border-gray-300 hover:border-gray-400 hover:shadow-md'
+        group relative bg-white/2 rounded-3xl border transition-all duration-300 cursor-pointer overflow-hidden
+        ${props.selected
+          ? 'border-primary-500 bg-primary-500/5 shadow-[0_0_30px_rgba(245,158,11,0.2)] scale-[1.05]'
+          : 'border-white/5 hover:border-white/10 hover:bg-white/5'
         }
-        cursor-pointer
-        overflow-hidden
       `}
       onClick={props.onClick}
     >
-      {/* Rarity Header */}
+      {/* Rarity Glow */}
       <div
-        class="px-3 py-1 text-xs font-bold text-white text-center"
+        class="absolute top-0 left-0 w-full h-1"
         style={{ 'background-color': rarityColor() }}
-      >
-        {rarityName()}
-      </div>
+      ></div>
 
-      {/* Item Icon */}
-      <div class="p-4 flex flex-col items-center">
+      {/* Item Content */}
+      <div class="p-6 flex flex-col items-center">
         <ItemCard item={props.item} size="lg" />
 
-        {/* Item Name */}
-        <div class="mt-3 text-center">
-          <div class="font-semibold text-sm text-gray-800 line-clamp-2">{props.item.name}</div>
-          <div class="text-xs text-gray-500 mt-1 capitalize">{props.item.type}</div>
+        <div class="mt-4 text-center">
+          <div class="text-[8px] font-mono font-bold uppercase tracking-widest mb-1" style={{ color: rarityColor() }}>
+            {rarityName()}
+          </div>
+          <div class="font-display font-bold text-white text-sm uppercase tracking-tight line-clamp-2">{props.item.name}</div>
         </div>
 
-        {/* Item Value */}
-        <div class="mt-2 text-yellow-600 font-bold text-sm">{props.item.value}g</div>
+        <div class="mt-3 text-primary-500 font-mono font-bold text-xs">{props.item.value}G</div>
 
         {/* Quick Equip Button */}
         <Show when={isEquippable() && props.onQuickEquip}>
@@ -251,33 +235,33 @@ const ItemShowcaseCard: Component<{
               props.onQuickEquip?.();
             }}
             class="
-              mt-3
+              mt-4
               w-full
               py-2
-              px-3
-              bg-blue-500
-              hover:bg-blue-600
-              text-white
-              text-xs
-              font-semibold
-              rounded
-              transition-colors
+              bg-primary-500/10
+              hover:bg-primary-500
+              text-primary-500
+              hover:text-white
+              text-[9px]
+              font-black
+              rounded-xl
+              border
+              border-primary-500/30
+              transition-all
+              uppercase
+              tracking-widest
             "
           >
-            Quick Equip
+            Equip
           </button>
         </Show>
       </div>
 
       {/* Selection Indicator */}
       <Show when={props.selected}>
-        <div class="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
-          <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fill-rule="evenodd"
-              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-              clip-rule="evenodd"
-            />
+        <div class="absolute top-3 right-3 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-black">
+          <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7" />
           </svg>
         </div>
       </Show>

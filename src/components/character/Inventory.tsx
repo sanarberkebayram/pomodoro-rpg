@@ -1,8 +1,3 @@
-/**
- * Inventory Component
- * Grid-based inventory display with drag-and-drop support
- */
-
 import { Component, For, Show, createSignal, createMemo } from 'solid-js';
 import type { InventoryStore } from '../../core/state/InventoryState';
 import type { Item } from '../../core/types/items';
@@ -21,12 +16,11 @@ interface InventoryProps {
 }
 
 /**
- * Inventory - Main inventory grid component
+ * Inventory - Main inventory grid component with modern dark theme
  */
 export const Inventory: Component<InventoryProps> = (props) => {
   const [selectedSlotId, setSelectedSlotId] = createSignal<string | null>(null);
-  const [_hoveredItem, _setHoveredItem] = createSignal<Item | null>(null);
-  const [_draggedSlotId, _setDraggedSlotId] = createSignal<string | null>(null);
+  const [draggedSlotId, setDraggedSlotId] = createSignal<string | null>(null);
 
   const inventoryState = () => props.inventoryStore.state;
 
@@ -112,7 +106,7 @@ export const Inventory: Component<InventoryProps> = (props) => {
    * Calculate grid columns based on inventory size
    */
   const gridColumns = createMemo(() => {
-    return Math.min(5, Math.ceil(Math.sqrt(inventoryState().maxSlots)));
+    return 5;
   });
 
   /**
@@ -123,70 +117,55 @@ export const Inventory: Component<InventoryProps> = (props) => {
   });
 
   return (
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col h-full bg-black/40 backdrop-blur-xl rounded-b-3xl">
       {/* Header with gold and slot info */}
-      <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 border-b-2 border-yellow-300 px-4 py-3">
-        <div class="flex justify-between items-center">
-          <div>
-            <h2 class="text-lg font-bold text-gray-800">Inventory</h2>
-            <p class="text-sm text-gray-600">
-              {emptySlots()} / {inventoryState().maxSlots} slots available
-            </p>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="text-right">
-              <p class="text-xs text-gray-600">Gold</p>
-              <p class="text-2xl font-bold text-yellow-600 flex items-center">
-                <svg
-                  class="w-6 h-6 mr-1"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                  <path
-                    fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                {inventoryState().gold}
-              </p>
+      <div class="px-6 py-6 border-b border-primary-500/10 bg-gradient-to-r from-primary-500/5 to-transparent drag-handle cursor-grab active:cursor-grabbing">
+        <div class="flex justify-between items-start">
+          <div class="space-y-1">
+            <h2 class="text-2xl font-display font-black tracking-tighter uppercase italic text-primary-500">Explorer Vault</h2>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Storage Sacks</span>
+              <span class="text-xs font-mono text-primary-400 font-bold uppercase">
+                {inventoryState().maxSlots - emptySlots()} / {inventoryState().maxSlots}
+              </span>
             </div>
-            <Show when={props.onClose}>
-              <button
-                onClick={props.onClose}
-                class="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-                disabled={props.locked}
-                aria-label="Close inventory"
-              >
-                ×
-              </button>
-            </Show>
+          </div>
+
+          <div class="flex items-center gap-6">
+            <div class="text-right">
+              <span class="block text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-1">Imperial Gold</span>
+              <div class="flex items-center gap-3 px-4 py-2 rounded-2xl bg-primary-500/5 border border-primary-500/10 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                <span class="text-xl drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">💰</span>
+                <span class="text-2xl font-mono font-bold text-primary-400">{inventoryState().gold}</span>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
 
-      {/* Locked overlay during work phase */}
+      {/* Locked overlay info */}
       <Show when={props.locked}>
-        <div class="bg-red-100 border-b-2 border-red-300 px-4 py-2">
-          <p class="text-sm text-red-700 font-semibold text-center">
-            🔒 Inventory locked during work phase
-          </p>
+        <div class="bg-danger/10 border-b border-danger/20 px-4 py-2 flex items-center justify-center gap-2">
+          <span class="text-[10px] text-danger font-bold uppercase tracking-widest animate-pulse">Vault Sealed: Battle in Progress</span>
         </div>
       </Show>
 
       {/* Inventory grid */}
-      <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
+      <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
         <div
-          class="grid gap-2"
+          class="grid gap-4"
           style={{
             'grid-template-columns': `repeat(${gridColumns()}, minmax(0, 1fr))`,
           }}
         >
           <For each={inventoryState().slots}>
             {(slot) => (
-              <div class="relative" onDragOver={handleDragOver} onDrop={handleDrop(slot.slotId)}>
+              <div
+                class={`relative transition-all duration-300 ${draggedSlotId() === slot.slotId ? 'opacity-20 scale-90 blur-sm' : ''}`}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop(slot.slotId)}
+              >
                 <ItemCard
                   item={slot.item}
                   quantity={slot.quantity}
@@ -199,10 +178,10 @@ export const Inventory: Component<InventoryProps> = (props) => {
                   size="md"
                 />
 
-                {/* Show tooltip on hover */}
-                <Show when={slot.item && selectedSlotId() === slot.slotId && slot.item}>
+                {/* Show tooltip on hover or select */}
+                <Show when={selectedSlotId() === slot.slotId ? slot.item : undefined}>
                   {(item) => (
-                    <div class="absolute z-10 top-full mt-2 left-0">
+                    <div class="absolute z-50 top-full mt-3 left-1/2 -translate-x-1/2 pointer-events-none w-72">
                       <ItemTooltip item={item()} position="bottom" />
                     </div>
                   )}
@@ -213,26 +192,19 @@ export const Inventory: Component<InventoryProps> = (props) => {
         </div>
       </div>
 
-      {/* Footer with actions */}
-      <div class="border-t-2 border-gray-300 bg-white px-4 py-3">
+      {/* Footer Actions */}
+      <div class="p-6 border-t border-white/5 bg-black/40">
         <Show
           when={selectedSlotId() !== null}
-          fallback={<p class="text-sm text-gray-500 text-center">Select an item to see actions</p>}
+          fallback={
+            <div class="text-center py-4 border-2 border-dashed border-white/5 rounded-2xl opacity-50">
+              <p class="text-[9px] font-mono text-gray-500 uppercase tracking-[0.3em] font-bold">Select relic of antiquity</p>
+            </div>
+          }
         >
-          <div class="flex gap-2 justify-center">
+          <div class="flex gap-4">
             <button
-              class="
-                px-4
-                py-2
-                bg-blue-500
-                text-white
-                rounded-lg
-                font-semibold
-                hover:bg-blue-600
-                transition-colors
-                disabled:opacity-50
-                disabled:cursor-not-allowed
-              "
+              class="flex-1 btn-primary py-4 text-[10px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(245,158,11,0.2)]"
               disabled={props.locked}
               onClick={() => {
                 const currentSlotId = selectedSlotId();
@@ -244,32 +216,20 @@ export const Inventory: Component<InventoryProps> = (props) => {
                 }
               }}
             >
-              Use / Equip
+              Perform Binding Ritual
             </button>
             <button
-              class="
-                px-4
-                py-2
-                bg-red-500
-                text-white
-                rounded-lg
-                font-semibold
-                hover:bg-red-600
-                transition-colors
-                disabled:opacity-50
-                disabled:cursor-not-allowed
-              "
+              class="px-6 py-4 rounded-xl bg-danger/5 text-danger border border-danger/20 hover:bg-danger hover:text-white transition-all font-black text-[10px] uppercase tracking-widest"
               disabled={props.locked}
               onClick={() => {
                 const slot = inventoryState().slots.find((s) => s.slotId === selectedSlotId());
                 if (slot?.item) {
-                  // Remove item
                   props.inventoryStore.removeItem(slot.item.id, slot.quantity);
                   setSelectedSlotId(null);
                 }
               }}
             >
-              Drop
+              Destroy
             </button>
           </div>
         </Show>

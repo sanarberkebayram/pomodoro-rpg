@@ -1,8 +1,3 @@
-/**
- * TaskSelection Component
- * Main interface for selecting tasks and risk levels during break phase
- */
-
 import { Component, For, Show, createSignal, createMemo } from 'solid-js';
 import type { CharacterStore } from '../../core/state/CharacterState';
 import type { InventoryStore } from '../../core/state/InventoryState';
@@ -23,7 +18,7 @@ interface TaskSelectionProps {
 }
 
 /**
- * TaskSelection - Interface for choosing work tasks
+ * TaskSelection - Modern interface for choosing work tasks
  */
 export const TaskSelection: Component<TaskSelectionProps> = (props) => {
   const [selectedTask, setSelectedTask] = createSignal<TaskType | null>(null);
@@ -52,7 +47,14 @@ export const TaskSelection: Component<TaskSelectionProps> = (props) => {
    */
   const selectionContext = createMemo((): TaskSelectionContext => {
     const char = characterState();
-    const equipmentBonuses = getEquipmentBonuses(char.equipment, inventoryState().items);
+    const partialBonuses = getEquipmentBonuses(char.equipment, inventoryState());
+
+    const equipmentBonuses = {
+      power: partialBonuses.power ?? 0,
+      defense: partialBonuses.defense ?? 0,
+      focus: partialBonuses.focus ?? 0,
+      luck: partialBonuses.luck ?? 0,
+    };
 
     return {
       characterLevel: char.level,
@@ -107,37 +109,62 @@ export const TaskSelection: Component<TaskSelectionProps> = (props) => {
   });
 
   return (
-    <div class="task-selection">
-      <div class="task-selection__header">
-        <h2 class="task-selection__title">Select Work Task</h2>
-        <p class="task-selection__subtitle">
-          Choose your task and risk level for the upcoming work session
-        </p>
+    <div class="space-y-6 animate-slide-up">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 class="text-3xl font-display font-bold text-white mb-1">Select Mission</h2>
+          <p class="text-gray-400">Choose your path for the next Focus Cycle</p>
+        </div>
+
+        <div class="flex gap-3">
+          <Show when={props.onCancel}>
+            <button class="btn-ghost text-sm" onClick={props.onCancel}>
+              Cancel
+            </button>
+          </Show>
+          <button
+            class="btn-primary px-8"
+            onClick={handleConfirm}
+            disabled={!canConfirm()}
+          >
+            Deploy Now
+          </button>
+        </div>
       </div>
 
-      <div class="task-selection__content">
-        {/* Left Panel: Task List */}
-        <div class="task-selection__tasks">
-          <h3 class="section-title">Available Tasks</h3>
-          <div class="task-list">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Task List */}
+        <div class="lg:col-span-4 space-y-4">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-primary-400 mb-2">Available Missions</h3>
+          <div class="space-y-3 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
             <For each={availableTasks()}>
               {(taskConfig) => (
                 <button
-                  class={`task-list__item ${selectedTask() === taskConfig.id ? 'task-list__item--selected' : ''}`}
+                  class={`w-full text-left transition-all duration-300 rounded-2xl border ${selectedTask() === taskConfig.id
+                    ? 'bg-primary-500/10 border-primary-500 shadow-[0_0_20px_rgba(14,165,233,0.15)] ring-1 ring-primary-500/50'
+                    : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'
+                    } p-4 group`}
                   onClick={() => handleTaskSelect(taskConfig.id)}
                   disabled={!taskConfig.available}
                 >
-                  <div class="task-list__item-header">
-                    <span class="task-list__item-name">{taskConfig.name}</span>
-                    <span class="task-list__item-level">Lv.{taskConfig.minLevel}+</span>
-                  </div>
-                  <p class="task-list__item-description">{taskConfig.description}</p>
-                  <div class="task-list__item-stats">
-                    <span class="stat-badge">
-                      {taskConfig.primaryStat.charAt(0).toUpperCase() +
-                        taskConfig.primaryStat.slice(1)}
+                  <div class="flex items-center justify-between mb-2">
+                    <span class={`font-bold transition-colors ${selectedTask() === taskConfig.id ? 'text-primary-400' : 'text-gray-200'}`}>
+                      {taskConfig.name}
                     </span>
-                    <span class="success-badge">{taskConfig.baseSuccessChance}% base</span>
+                    <span class="text-[10px] font-mono font-medium text-gray-500 bg-black/30 px-2 py-0.5 rounded border border-white/5">
+                      LV {taskConfig.minLevel}
+                    </span>
+                  </div>
+                  <p class="text-xs text-gray-400 line-clamp-2 mb-3 leading-relaxed">
+                    {taskConfig.description}
+                  </p>
+                  <div class="flex items-center gap-3">
+                    <span class="text-[9px] uppercase tracking-tighter font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      {taskConfig.primaryStat}
+                    </span>
+                    <span class="text-[9px] uppercase tracking-tighter font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      {taskConfig.baseSuccessChance}% Base
+                    </span>
                   </div>
                 </button>
               )}
@@ -145,51 +172,45 @@ export const TaskSelection: Component<TaskSelectionProps> = (props) => {
           </div>
         </div>
 
-        {/* Middle Panel: Task Details & Risk Selection */}
-        <div class="task-selection__details">
+        {/* Middle Column: Details & Configuration */}
+        <div class="lg:col-span-5 space-y-6">
           <Show
             when={currentTaskConfig()}
             fallback={
-              <div class="task-selection__placeholder">
-                <p>Select a task to view details</p>
+              <div class="glass-panel h-full min-h-[400px] flex flex-col items-center justify-center text-center p-8 opacity-50 border-dashed border-2 border-primary-500/10 bg-transparent rounded-3xl">
+                <div class="text-6xl mb-4 animate-pulse">📜</div>
+                <h3 class="text-lg font-display font-black text-gray-300 uppercase tracking-widest">Awaiting Selection</h3>
+                <p class="text-xs text-gray-500 mt-4 max-w-[240px] font-medium leading-relaxed italic">Consult the roster of quests to unseal the scroll of destiny.</p>
               </div>
             }
           >
             {(config) => (
-              <>
+              <div class="space-y-6">
                 <TaskInfoCard config={config()} riskLevel={selectedRisk()} />
-                <RiskLevelSelector
-                  config={config()}
-                  selectedRisk={selectedRisk()}
-                  onRiskSelect={handleRiskSelect}
-                />
+
+                <div class="glass-panel p-6 border-white/5 bg-black/20">
+                  <RiskLevelSelector
+                    config={config()}
+                    selectedRisk={selectedRisk()}
+                    onRiskSelect={handleRiskSelect}
+                  />
+                </div>
+
                 <Show when={successChance()}>
                   {(chance) => <SuccessChanceDisplay calculation={chance()} />}
                 </Show>
-              </>
+              </div>
             )}
           </Show>
         </div>
 
-        {/* Right Panel: Character Loadout */}
-        <div class="task-selection__loadout">
+        {/* Right Column: Readiness Panel */}
+        <div class="lg:col-span-3">
           <TaskLoadoutPanel
             characterStore={props.characterStore}
             inventoryStore={props.inventoryStore}
           />
         </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div class="task-selection__actions">
-        <Show when={props.onCancel}>
-          <button class="btn btn--secondary" onClick={props.onCancel}>
-            Cancel
-          </button>
-        </Show>
-        <button class="btn btn--primary" onClick={handleConfirm} disabled={!canConfirm()}>
-          Start Task
-        </button>
       </div>
     </div>
   );

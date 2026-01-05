@@ -1,8 +1,3 @@
-/**
- * ItemCard Component
- * Displays a single item with its icon, name, rarity, and quantity
- */
-
 import { Component, Show, createMemo } from 'solid-js';
 import type { Item } from '../../core/types/items';
 
@@ -21,60 +16,59 @@ interface ItemCardProps {
 }
 
 /**
- * Rarity color mappings for visual distinction
+ * Rarity specific styling for the modern theme
  */
-const RARITY_COLORS = {
-  common: 'border-gray-400 bg-gray-50',
-  uncommon: 'border-green-500 bg-green-50',
-  rare: 'border-blue-500 bg-blue-50',
-  epic: 'border-purple-500 bg-purple-50',
-  legendary: 'border-orange-500 bg-orange-50',
+const RARITY_THEME = {
+  common: {
+    border: 'border-white/10',
+    bg: 'bg-white/5',
+    glow: 'shadow-none',
+    text: 'text-gray-400',
+    accent: 'bg-gray-500/20'
+  },
+  uncommon: {
+    border: 'border-emerald-500/30',
+    bg: 'bg-emerald-500/5',
+    glow: 'shadow-[0_0_10px_rgba(16,185,129,0.1)]',
+    text: 'text-emerald-400',
+    accent: 'bg-emerald-500/20'
+  },
+  rare: {
+    border: 'border-blue-500/40',
+    bg: 'bg-blue-500/5',
+    glow: 'shadow-[0_0_15px_rgba(59,130,246,0.15)]',
+    text: 'text-blue-400',
+    accent: 'bg-blue-500/20'
+  },
+  epic: {
+    border: 'border-purple-500/50',
+    bg: 'bg-purple-500/10',
+    glow: 'shadow-[0_0_20px_rgba(168,85,247,0.2)]',
+    text: 'text-purple-400',
+    accent: 'bg-purple-500/20'
+  },
+  legendary: {
+    border: 'border-amber-500/60',
+    bg: 'bg-amber-500/15',
+    glow: 'shadow-[0_0_25px_rgba(245,158,11,0.25)]',
+    text: 'text-amber-400',
+    accent: 'bg-amber-500/30'
+  },
 } as const;
 
-const RARITY_TEXT_COLORS = {
-  common: 'text-gray-700',
-  uncommon: 'text-green-700',
-  rare: 'text-blue-700',
-  epic: 'text-purple-700',
-  legendary: 'text-orange-700',
-} as const;
+const SIZE_MAP = {
+  sm: 'w-10 h-10',
+  md: 'w-14 h-14',
+  lg: 'w-20 h-20',
+};
 
 /**
- * Size mappings for different use cases
- */
-const SIZE_CLASSES = {
-  sm: {
-    container: 'w-12 h-12',
-    text: 'text-xs',
-    quantity: 'text-xs',
-  },
-  md: {
-    container: 'w-16 h-16',
-    text: 'text-sm',
-    quantity: 'text-sm',
-  },
-  lg: {
-    container: 'w-20 h-20',
-    text: 'text-base',
-    quantity: 'text-base',
-  },
-} as const;
-
-/**
- * ItemCard - Visual representation of an inventory item
+ * ItemCard - Modern visual representation of an inventory item
  */
 export const ItemCard: Component<ItemCardProps> = (props) => {
-  const size = () => props.size ?? 'md';
-  const sizeClasses = createMemo(() => SIZE_CLASSES[size()]);
-
-  const rarityBorderColor = createMemo(() => {
-    if (!props.item) return 'border-gray-300 bg-gray-100';
-    return RARITY_COLORS[props.item.rarity];
-  });
-
-  const rarityTextColor = createMemo(() => {
-    if (!props.item) return 'text-gray-500';
-    return RARITY_TEXT_COLORS[props.item.rarity];
+  const theme = createMemo(() => {
+    if (!props.item) return null;
+    return RARITY_THEME[props.item.rarity];
   });
 
   const isEmpty = () => !props.item;
@@ -83,106 +77,88 @@ export const ItemCard: Component<ItemCardProps> = (props) => {
     <div
       class={`
         relative
-        ${sizeClasses().container}
-        border-2
-        rounded-lg
-        ${rarityBorderColor()}
+        ${SIZE_MAP[props.size ?? 'md']}
+        rounded-xl
+        border
+        backdrop-blur-sm
         transition-all
-        duration-200
-        ${props.onClick ? 'cursor-pointer hover:scale-105 hover:shadow-md' : ''}
-        ${props.selected ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
-        ${props.draggable && !isEmpty() ? 'cursor-grab active:cursor-grabbing' : ''}
-        ${isEmpty() ? 'opacity-50' : ''}
-        flex
-        items-center
-        justify-center
-        overflow-hidden
+        duration-300
+        group
+        ${isEmpty()
+          ? 'border-white/5 bg-white/2'
+          : `${theme()?.border} ${theme()?.bg} ${theme()?.glow} hover:scale-105 active:scale-95`
+        }
+        ${props.selected ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-black' : ''}
+        ${props.draggable && !isEmpty() ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}
+        flex items-center justify-center overflow-hidden
       `}
       onClick={() => props.onClick?.()}
       onDblClick={() => props.onDoubleClick?.()}
       draggable={props.draggable && !isEmpty()}
       onDragStart={props.onDragStart}
       onDragEnd={props.onDragEnd}
-      role="button"
-      tabindex={props.onClick ? 0 : -1}
-      aria-label={props.item ? `${props.item.name} (${props.item.rarity})` : 'Empty slot'}
     >
       <Show
         when={props.item}
         fallback={
-          <div class="text-gray-400 text-2xl">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
+          <div class="opacity-10 group-hover:opacity-20 transition-opacity">
+            <span class="text-xl">➕</span>
           </div>
         }
       >
         {(item) => (
           <>
-            {/* Item icon placeholder - will be replaced with actual icons */}
+            {/* Background pattern/accent */}
+            <div class={`absolute inset-0 opacity-10 ${theme()?.accent}`}></div>
+
+            {/* Item icon (Letter based for now) */}
             <div
               class={`
+                relative
                 flex
                 items-center
                 justify-center
                 w-full
                 h-full
-                ${rarityTextColor()}
-                font-bold
-                ${sizeClasses().text}
+                ${theme()?.text}
+                font-black
+                text-lg
+                tracking-tighter
               `}
-              title={item().name}
             >
-              {/* Icon placeholder - display first letter for now */}
-              <span class="text-2xl">{item().name.charAt(0)}</span>
+              <span class="drop-shadow-[0_0_8px_currentColor]">{item().name.charAt(0)}</span>
+
+              {/* Rarity shine effect */}
+              <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-100%] group-hover:translate-x-[100%] duration-1000"></div>
             </div>
 
-            {/* Quantity badge for stackable items */}
+            {/* Quantity badge */}
             <Show when={props.quantity && props.quantity > 1}>
               <div
-                class={`
+                class="
                   absolute
-                  bottom-0
-                  right-0
-                  bg-gray-900
-                  text-white
+                  bottom-0.5
+                  right-0.5
+                  bg-black/80
+                  text-white/90
                   px-1
-                  rounded-tl
-                  rounded-br
-                  ${sizeClasses().quantity}
-                  font-semibold
-                  leading-tight
-                `}
+                  py-0.5
+                  rounded-md
+                  text-[9px]
+                  font-mono
+                  font-bold
+                  border border-white/10
+                  backdrop-blur-md
+                "
               >
                 {props.quantity}
               </div>
             </Show>
 
-            {/* Rarity indicator dot */}
-            <div
-              class={`
-                absolute
-                top-1
-                right-1
-                w-2
-                h-2
-                rounded-full
-                ${rarityBorderColor()}
-                border-2
-              `}
-              aria-hidden="true"
-            />
+            {/* Selection indicator glow */}
+            <Show when={props.selected}>
+              <div class="absolute inset-0 ring-1 ring-primary-400 rounded-xl animate-pulse"></div>
+            </Show>
           </>
         )}
       </Show>

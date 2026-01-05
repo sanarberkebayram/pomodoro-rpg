@@ -80,18 +80,18 @@ export const ItemComparison: Component<ItemComparisonProps> = (props) => {
   });
 
   return (
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">
-      <div class="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div class="bg-white/90 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+        <div class="bg-gradient-to-r from-slate-900 to-slate-700 text-white p-6">
           <div class="flex justify-between items-center">
             <div>
               <h2 class="text-2xl font-bold">Item Comparison</h2>
-              <p class="text-blue-100 mt-1">Compare equipment stats</p>
+              <p class="text-slate-200 mt-1">Compare equipment stats</p>
             </div>
             <button
               onClick={props.onClose}
-              class="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors"
+              class="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
               aria-label="Close"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,13 +111,13 @@ export const ItemComparison: Component<ItemComparisonProps> = (props) => {
           <div class="grid grid-cols-2 gap-6">
             {/* Current Item */}
             <div>
-              <h3 class="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wide">
+              <h3 class="text-sm font-semibold text-slate-500 mb-3 uppercase tracking-wide">
                 Current
               </h3>
               <Show
                 when={props.equippedItem}
                 fallback={
-                  <div class="bg-gray-100 rounded-lg p-6 text-center text-gray-500 h-full flex items-center justify-center">
+                  <div class="bg-slate-100 rounded-xl p-6 text-center text-slate-500 h-full flex items-center justify-center">
                     <div>
                       <div class="text-4xl mb-2">∅</div>
                       <div>No item equipped</div>
@@ -131,10 +131,10 @@ export const ItemComparison: Component<ItemComparisonProps> = (props) => {
 
             {/* New Item */}
             <div>
-              <h3 class="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wide">
+              <h3 class="text-sm font-semibold text-slate-500 mb-3 uppercase tracking-wide">
                 New Item
                 <Show when={isOverallUpgrade()}>
-                  <span class="ml-2 text-green-600">✓ Upgrade</span>
+                  <span class="ml-2 text-emerald-600">✓ Upgrade</span>
                 </Show>
               </h3>
               <ItemComparisonCard item={props.newItem} isNew />
@@ -143,16 +143,16 @@ export const ItemComparison: Component<ItemComparisonProps> = (props) => {
 
           {/* Stat Differences */}
           <Show when={statDifferences().length > 0}>
-            <div class="mt-6 bg-gray-50 rounded-lg p-4">
-              <h4 class="font-semibold text-gray-800 mb-3">Stat Comparison</h4>
+            <div class="mt-6 bg-slate-50 rounded-2xl p-4">
+              <h4 class="font-semibold text-slate-800 mb-3">Stat Comparison</h4>
               <div class="space-y-2">
                 <For each={statDifferences()}>
                   {(diff) => (
                     <div class="flex items-center justify-between text-sm">
-                      <span class="text-gray-600">{diff.label}</span>
+                      <span class="text-slate-600">{diff.label}</span>
                       <div class="flex items-center gap-3">
-                        <span class="text-gray-500 w-12 text-right">{diff.currentValue}</span>
-                        <span class="text-gray-400">→</span>
+                        <span class="text-slate-500 w-12 text-right">{diff.currentValue}</span>
+                        <span class="text-slate-400">→</span>
                         <span class="font-semibold w-12">{diff.newValue}</span>
                         <span
                           class={`
@@ -161,10 +161,10 @@ export const ItemComparison: Component<ItemComparisonProps> = (props) => {
                             font-bold
                             ${
                               diff.difference > 0
-                                ? 'text-green-600'
+                                ? 'text-emerald-600'
                                 : diff.difference < 0
                                   ? 'text-red-600'
-                                  : 'text-gray-400'
+                                  : 'text-slate-400'
                             }
                           `}
                         >
@@ -177,13 +177,13 @@ export const ItemComparison: Component<ItemComparisonProps> = (props) => {
                 </For>
 
                 {/* Value Difference */}
-                <div class="flex items-center justify-between text-sm pt-2 border-t border-gray-200">
-                  <span class="text-gray-600">Value</span>
+                <div class="flex items-center justify-between text-sm pt-2 border-t border-slate-200">
+                  <span class="text-slate-600">Value</span>
                   <div class="flex items-center gap-3">
-                    <span class="text-gray-500 w-12 text-right">
+                    <span class="text-slate-500 w-12 text-right">
                       {props.equippedItem?.value ?? 0}g
                     </span>
-                    <span class="text-gray-400">→</span>
+                    <span class="text-slate-400">→</span>
                     <span class="font-semibold w-12">{props.newItem.value}g</span>
                     <span
                       class={`
@@ -192,10 +192,10 @@ export const ItemComparison: Component<ItemComparisonProps> = (props) => {
                         font-bold
                         ${
                           valueDifference() > 0
-                            ? 'text-green-600'
+                            ? 'text-emerald-600'
                             : valueDifference() < 0
                               ? 'text-red-600'
-                              : 'text-gray-400'
+                              : 'text-slate-400'
                         }
                       `}
                     >
@@ -210,7 +210,7 @@ export const ItemComparison: Component<ItemComparisonProps> = (props) => {
         </div>
 
         {/* Actions */}
-        <div class="border-t-2 border-gray-200 p-6">
+        <div class="border-t border-white/70 p-6">
           <div class="flex gap-4">
             <button
               onClick={props.onEquip}
@@ -218,14 +218,14 @@ export const ItemComparison: Component<ItemComparisonProps> = (props) => {
                 flex-1
                 py-3
                 px-6
-                rounded-lg
+                rounded-xl
                 font-bold
                 text-white
                 transition-all
                 ${
                   isOverallUpgrade()
-                    ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700'
+                    : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700'
                 }
                 active:scale-95
               `}
@@ -239,11 +239,11 @@ export const ItemComparison: Component<ItemComparisonProps> = (props) => {
               class="
                 px-6
                 py-3
-                rounded-lg
+                rounded-xl
                 font-semibold
-                text-gray-700
-                bg-gray-200
-                hover:bg-gray-300
+                text-slate-700
+                bg-slate-200
+                hover:bg-slate-300
                 active:scale-95
                 transition-all
               "
@@ -270,11 +270,11 @@ const ItemComparisonCard: Component<{
   return (
     <div
       class={`
-        bg-white
-        rounded-lg
+        bg-white/90
+        rounded-2xl
         border-2
         overflow-hidden
-        ${props.isNew ? 'border-blue-500 shadow-lg' : 'border-gray-300'}
+        ${props.isNew ? 'border-emerald-500 shadow-lg' : 'border-slate-200'}
       `}
     >
       {/* Rarity Header */}
@@ -288,14 +288,14 @@ const ItemComparisonCard: Component<{
       {/* Item Details */}
       <div class="p-4">
         {/* Item Icon */}
-        <div class="w-20 h-20 mx-auto mb-3 bg-gray-100 rounded-lg flex items-center justify-center text-4xl">
+        <div class="w-20 h-20 mx-auto mb-3 bg-slate-100 rounded-xl flex items-center justify-center text-4xl">
           {props.item.name.charAt(0)}
         </div>
 
         {/* Item Name */}
         <div class="text-center mb-4">
-          <div class="font-bold text-gray-800 text-lg">{props.item.name}</div>
-          <div class="text-sm text-gray-500 capitalize mt-1">
+          <div class="font-bold text-slate-800 text-lg">{props.item.name}</div>
+          <div class="text-sm text-slate-500 capitalize mt-1">
             {props.item.equipmentSlot} •{' '}
             {props.item.type === 'weapon' ? props.item.weaponType : props.item.armorType}
           </div>
@@ -321,7 +321,7 @@ const ItemComparisonCard: Component<{
             {() => {
               const weapon = props.item as Extract<EquippableItem, { type: 'weapon' }>;
               return (
-                <div class="pt-2 border-t border-gray-200">
+                <div class="pt-2 border-t border-slate-200">
                   <StatRow
                     label="Damage"
                     value={`${weapon.damageRange.min}-${weapon.damageRange.max}`}
@@ -335,7 +335,7 @@ const ItemComparisonCard: Component<{
             {() => {
               const armor = props.item as Extract<EquippableItem, { type: 'armor' }>;
               return (
-                <div class="pt-2 border-t border-gray-200">
+                <div class="pt-2 border-t border-slate-200">
                   <StatRow label="Armor Rating" value={armor.armorRating} />
                 </div>
               );
@@ -344,7 +344,7 @@ const ItemComparisonCard: Component<{
         </div>
 
         {/* Description */}
-        <div class="mt-4 text-xs text-gray-500 text-center">{props.item.description}</div>
+        <div class="mt-4 text-xs text-slate-500 text-center">{props.item.description}</div>
       </div>
     </div>
   );
@@ -356,8 +356,8 @@ const ItemComparisonCard: Component<{
 const StatRow: Component<{ label: string; value: number | string }> = (props) => {
   return (
     <div class="flex justify-between text-sm">
-      <span class="text-gray-600">{props.label}:</span>
-      <span class="font-semibold text-gray-800">+{props.value}</span>
+      <span class="text-slate-600">{props.label}:</span>
+      <span class="font-semibold text-slate-800">+{props.value}</span>
     </div>
   );
 };

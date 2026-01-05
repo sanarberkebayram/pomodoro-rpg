@@ -1,12 +1,5 @@
-/**
- * StatDisplay Component
- * Displays character stats with visual progress bars and bonuses
- */
-
 import { Component, For, Show } from 'solid-js';
 import type { CharacterStats, InjuryState, HospitalBill } from '../../core/types/character';
-import { HealthBar } from '../common/HealthBar';
-import { InjuryIndicator } from '../common/InjuryIndicator';
 
 interface StatDisplayProps {
   baseStats: CharacterStats;
@@ -28,7 +21,7 @@ interface StatConfig {
   key: keyof CharacterStats;
   label: string;
   icon: string;
-  color: string;
+  colorClass: string;
   description: string;
 }
 
@@ -37,34 +30,34 @@ const STAT_CONFIGS: StatConfig[] = [
     key: 'power',
     label: 'Power',
     icon: '⚔️',
-    color: 'red',
-    description: 'Increases attack damage and task success rate',
+    colorClass: 'text-rose-400',
+    description: 'Offensive throughput and mission success capability',
   },
   {
     key: 'defense',
     label: 'Defense',
     icon: '🛡️',
-    color: 'blue',
-    description: 'Reduces damage taken from failures',
+    colorClass: 'text-primary-400',
+    description: 'Damage mitigation during hazard events',
   },
   {
     key: 'focus',
     label: 'Focus',
     icon: '🎯',
-    color: 'purple',
-    description: 'Improves critical hit chance and task precision',
+    colorClass: 'text-violet-400',
+    description: 'Precision work and critical success probability',
   },
   {
     key: 'luck',
     label: 'Luck',
     icon: '🍀',
-    color: 'green',
-    description: 'Increases loot quality and rare item drops',
+    colorClass: 'text-emerald-400',
+    description: 'Loot quality and rare node discovery',
   },
 ];
 
 /**
- * StatDisplay - Shows character stats with bonuses
+ * StatDisplay - Shows character stats with bonuses in a modern UI
  */
 export const StatDisplay: Component<StatDisplayProps> = (props) => {
   /**
@@ -73,83 +66,40 @@ export const StatDisplay: Component<StatDisplayProps> = (props) => {
   const getStatBonus = (statKey: keyof CharacterStats): number => {
     // Don't show bonuses for health stats in this view
     if (statKey === 'health' || statKey === 'maxHealth') return 0;
-
     return props.computedStats[statKey] - props.baseStats[statKey];
   };
 
-  /**
-   * Get color classes for a stat
-   */
-  const getColorClasses = (color: string) => {
-    const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-      red: {
-        bg: 'bg-red-100',
-        text: 'text-red-700',
-        border: 'border-red-300',
-      },
-      blue: {
-        bg: 'bg-blue-100',
-        text: 'text-blue-700',
-        border: 'border-blue-300',
-      },
-      purple: {
-        bg: 'bg-purple-100',
-        text: 'text-purple-700',
-        border: 'border-purple-300',
-      },
-      green: {
-        bg: 'bg-green-100',
-        text: 'text-green-700',
-        border: 'border-green-300',
-      },
-    };
-
-    return colorMap[color] || colorMap.red;
-  };
-
   return (
-    <div class="space-y-4">
-      {/* Health bar with injury indicator */}
-      <div class="bg-white border-2 border-gray-300 rounded-lg p-4">
-        <HealthBar
-          current={props.computedStats.health}
-          max={props.computedStats.maxHealth}
-          isInjured={props.injury?.isInjured}
-          showValues={true}
-          size="medium"
-        />
+    <div class="space-y-6">
+      {/* Integrity Core (Health) */}
+      <div class="glass-panel p-5 border-white/5 bg-white/2">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Integrity Core</h4>
+            <span class="text-xs font-mono text-gray-400">STATUS: {props.computedStats.health > props.computedStats.maxHealth * 0.3 ? 'STABLE' : 'CRITICAL'}</span>
+          </div>
+          <div class="text-right">
+            <span class="text-xl font-mono font-bold text-white">{props.computedStats.health} <span class="text-xs opacity-30">/ {props.computedStats.maxHealth}</span></span>
+          </div>
+        </div>
+        <div class="h-2 w-full bg-black/40 rounded-full border border-white/5 overflow-hidden">
+          <div
+            class="h-full bg-gradient-to-r from-danger to-rose-400 transition-all duration-1000 shadow-[0_0_10px_rgba(239,68,68,0.3)]"
+            style={{ width: `${(props.computedStats.health / props.computedStats.maxHealth) * 100}%` }}
+          />
+        </div>
       </div>
 
-      {/* Status indicators row */}
-      <div class="flex gap-2">
-        {/* Injury indicator */}
-        <Show when={props.injury}>
-          {(injury) => <InjuryIndicator injury={injury()} mode="compact" class="flex-1" />}
-        </Show>
-
-        {/* Hospital bill indicator */}
-        <Show when={props.hospitalBill}>
-          {(bill) => (
-            <div class="flex-1 px-2 py-1 bg-red-100 text-red-800 rounded-lg text-xs font-medium flex items-center justify-center gap-1">
-              <span>💰</span>
-              <span>Bill: {bill().amount}G</span>
-            </div>
-          )}
-        </Show>
-      </div>
-
-      {/* Main stats grid */}
+      {/* Primary Stat Grid */}
       <div
         class={`
           grid
-          gap-3
+          gap-4
           ${props.layout === 'horizontal' ? 'grid-cols-2' : 'grid-cols-1'}
         `}
       >
         <For each={STAT_CONFIGS}>
           {(config) => {
-            const colors = getColorClasses(config.color);
-            const baseValue = props.baseStats[config.key];
             const computedValue = props.computedStats[config.key];
             const bonus = getStatBonus(config.key);
             const hasBonus = bonus !== 0;
@@ -157,57 +107,54 @@ export const StatDisplay: Component<StatDisplayProps> = (props) => {
             return (
               <div
                 class={`
-                  bg-white
-                  border-2
-                  ${colors.border}
-                  rounded-lg
-                  p-3
-                  ${props.detailed ? 'hover:shadow-md' : ''}
-                  transition-shadow
+                  glass-panel
+                  bg-white/5
+                  border-white/5
+                  p-4
+                  group
+                  relative
+                  overflow-hidden
+                  transition-all
+                  duration-300
+                  hover:bg-white/10
+                  ${props.detailed ? 'hover:-translate-y-1' : ''}
                 `}
-                title={config.description}
               >
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="text-xl" aria-hidden="true">
-                      {config.icon}
-                    </span>
-                    <div>
-                      <p class="font-semibold text-gray-800 text-sm">{config.label}</p>
-                      {props.detailed && (
-                        <p class="text-xs text-gray-500 mt-1">{config.description}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <p class={`text-2xl font-bold ${colors.text}`}>{Math.floor(computedValue)}</p>
-                    {hasBonus && (
-                      <p
-                        class={`text-xs font-semibold ${bonus > 0 ? 'text-green-600' : 'text-red-600'}`}
-                      >
-                        {bonus > 0 ? '+' : ''}
-                        {Math.floor(bonus)}
-                      </p>
-                    )}
-                  </div>
+                {/* Background Decor */}
+                <div class={`absolute top-0 right-0 p-2 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity`}>
+                  <span class="text-4xl">{config.icon}</span>
                 </div>
 
-                {/* Detailed breakdown */}
-                {props.detailed && hasBonus && (
-                  <div class="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
-                    <div class="flex justify-between">
-                      <span>Base:</span>
-                      <span class="font-semibold">{Math.floor(baseValue)}</span>
+                <div class="flex items-center justify-between relative z-10">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-black/40 border border-white/5 text-xl">
+                      {config.icon}
                     </div>
-                    <div class="flex justify-between">
-                      <span>Bonus:</span>
-                      <span
-                        class={`font-semibold ${bonus > 0 ? 'text-green-600' : 'text-red-600'}`}
-                      >
-                        {bonus > 0 ? '+' : ''}
-                        {Math.floor(bonus)}
+                    <div>
+                      <p class="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">{config.label}</p>
+                      <p class={`text-2xl font-display font-bold text-white group-hover:${config.colorClass}`}>{Math.floor(computedValue)}</p>
+                    </div>
+                  </div>
+
+                  <Show when={hasBonus}>
+                    <div class="text-right">
+                      <span class={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${bonus > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-danger/10 text-danger border border-danger/20'}`}>
+                        {bonus > 0 ? '+' : ''}{Math.floor(bonus)}
                       </span>
                     </div>
+                  </Show>
+                </div>
+
+                {props.detailed && (
+                  <div class="mt-4 pt-4 border-t border-white/5">
+                    <p class="text-[10px] text-gray-400 leading-relaxed italic">{config.description}</p>
+                    {hasBonus && (
+                      <div class="mt-3 flex items-center gap-2 text-[10px] font-mono uppercase">
+                        <span class="text-gray-500">Base Matrix:</span>
+                        <span class="text-gray-300">{Math.floor(props.baseStats[config.key])}</span>
+                        <span class="text-gray-500 ml-auto group-hover:block hidden animate-fade-in">+ {Math.floor(bonus)} From Equipment</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

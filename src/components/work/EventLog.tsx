@@ -3,7 +3,7 @@
  * Displays a scrolling log of events that occur during WORK phase
  */
 
-import { Component, For, createEffect, createSignal } from 'solid-js';
+import { Component, For, createEffect, createSignal, Show } from 'solid-js';
 import { GameEvent } from '@/core/types/events';
 
 interface EventLogProps {
@@ -51,13 +51,13 @@ export const EventLog: Component<EventLogProps> = (props) => {
   const getSeverityClasses = (severity: GameEvent['severity']): string => {
     switch (severity) {
       case 'flavor':
-        return 'text-gray-400 border-gray-600';
+        return 'text-gray-400 border-white/5';
       case 'info':
-        return 'text-blue-300 border-blue-600';
+        return 'text-primary-300 border-primary-500/30 bg-primary-500/5';
       case 'warning':
-        return 'text-yellow-300 border-yellow-600';
+        return 'text-warning border-warning/30 bg-warning/5';
       case 'critical':
-        return 'text-red-300 border-red-600';
+        return 'text-danger border-danger/30 bg-danger/5';
     }
   };
 
@@ -133,59 +133,59 @@ export const EventLog: Component<EventLogProps> = (props) => {
 
   return (
     <div
-      class={`event-log flex flex-col bg-gray-900/90 rounded-lg border border-gray-700 ${
-        props.class || ''
-      }`}
+      class={`event-log flex flex-col glass-panel rounded-3xl border border-white/5 overflow-hidden shadow-2xl ${props.class || ''
+        }`}
     >
       {/* Header */}
-      <div class="flex items-center justify-between px-4 py-2 border-b border-gray-700">
-        <h3 class="text-sm font-semibold text-gray-300">Event Log</h3>
-        <span class="text-xs text-gray-500">
-          {displayedEvents().length} / {maxEvents()} events
+      <div class="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-primary-500/5 backdrop-blur-md">
+        <h3 class="text-xs font-display font-black text-primary-400 tracking-[0.2em] uppercase">Expedition Chronicle</h3>
+        <span class="text-[9px] font-mono font-black text-primary-500 bg-primary-500/10 px-2 py-0.5 rounded-full border border-primary-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)] uppercase">
+          {displayedEvents().length} Echoes Recorded
         </span>
       </div>
 
       {/* Event List */}
       <div
         ref={logContainer}
-        class="flex-1 overflow-y-auto p-2 space-y-1 min-h-0"
-        style={{ 'max-height': '400px' }}
+        class="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 custom-scrollbar"
+        style={{ 'max-height': '600px' }}
       >
         <For
           each={displayedEvents()}
           fallback={
-            <div class="flex items-center justify-center h-full text-gray-500 text-sm">
-              No events yet...
+            <div class="flex flex-col items-center justify-center h-full opacity-30 py-16">
+              <div class="text-5xl mb-4 animate-pulse drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]">🔮</div>
+              <div class="text-[10px] font-display font-black uppercase tracking-[0.2em] text-gray-500 italic">Listening to spirit echoes...</div>
             </div>
           }
         >
           {(event) => (
             <div
-              class={`event-entry flex items-start gap-2 p-2 rounded border-l-2 transition-colors hover:bg-gray-800/50 cursor-default ${getSeverityClasses(
+              class={`event-entry flex items-start gap-4 p-4 rounded-2xl border-l-[3px] transition-all duration-300 hover:bg-white/5 cursor-default ${getSeverityClasses(
                 event.severity
               )}`}
               onMouseEnter={() => setHoveredEventId(event.id)}
               onMouseLeave={() => setHoveredEventId(null)}
             >
               {/* Severity Icon */}
-              <div class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                <span class="text-base">{getSeverityIcon(event.severity)}</span>
+              <div class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-xl bg-black/40 border border-white/5 text-sm shadow-inner">
+                <span>{getSeverityIcon(event.severity)}</span>
               </div>
 
               {/* Event Content */}
               <div class="flex-1 min-w-0">
                 {/* Message */}
-                <p class="text-sm leading-tight break-words">{event.message}</p>
+                <p class="text-[13px] font-medium leading-relaxed tracking-wide text-gray-200 font-sans">{event.message}</p>
 
                 {/* Timestamp and Effects (on hover) */}
-                <div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                  <span>{formatTime(event.timestamp)}</span>
-                  {hoveredEventId() === event.id && (
-                    <>
-                      <span>•</span>
-                      <span class="text-gray-400">{getEffectsSummary(event)}</span>
-                    </>
-                  )}
+                <div class="mt-2.5 flex items-center gap-3 text-[9px] font-mono uppercase tracking-widest">
+                  <span class="text-gray-600 font-bold">{formatTime(event.timestamp)}</span>
+                  <Show when={hoveredEventId() === event.id}>
+                    <div class="flex items-center gap-2 animate-fade-in">
+                      <span class="w-1 h-1 rounded-full bg-primary-500/30"></span>
+                      <span class="text-primary-400 font-black">{getEffectsSummary(event)}</span>
+                    </div>
+                  </Show>
                 </div>
               </div>
             </div>
@@ -195,8 +195,8 @@ export const EventLog: Component<EventLogProps> = (props) => {
 
       {/* Footer (optional - shows if log is full) */}
       {displayedEvents().length >= maxEvents() && (
-        <div class="px-4 py-2 border-t border-gray-700 text-xs text-gray-500 text-center">
-          Showing latest {maxEvents()} events
+        <div class="px-5 py-3 border-t border-white/5 text-[9px] font-display font-black text-gray-600 text-center uppercase tracking-[0.3em] bg-black/40">
+          Eternal Chronicle Full • Spirit Limit Reached
         </div>
       )}
     </div>

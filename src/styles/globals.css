@@ -1,9 +1,169 @@
-/* Mobile-first global styles */
+@import "tailwindcss";
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@theme {
+  --color-background: #080810;
+  --color-surface: #121220;
+  --color-surface-highlight: #1a1a30;
+
+  --color-primary-50: #fffbeb;
+  --color-primary-100: #fef3c7;
+  --color-primary-200: #fde68a;
+  --color-primary-300: #fcd34d;
+  --color-primary-400: #fbbf24;
+  --color-primary-500: #f59e0b;
+  /* Amber/Gold */
+  --color-primary-600: #d97706;
+  /* Bronze */
+  --color-primary-700: #b45309;
+  --color-primary-800: #92400e;
+  --color-primary-900: #78350f;
+
+  --color-accent: #7c3aed;
+  /* Mana Violet */
+  --color-accent-light: #a78bfa;
+  --color-accent-dark: #6d28d9;
+
+  --color-success: #10b981;
+  /* Emerald */
+  --color-warning: #f59e0b;
+  /* Amber */
+  --color-danger: #e11d48;
+  /* Crimson */
+
+  --font-sans: "Lusitana", "Inter", serif;
+  --font-display: "Cinzel", serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --animate-fade-in: fadeIn 0.5s ease-out;
+  --animate-slide-up: slideUp 0.5s ease-out;
+  --animate-pulse-slow: pulse 3s infinite;
+  --animate-scan: scan 3s linear infinite;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes scan {
+    from {
+      transform: translateY(-100%);
+    }
+
+    to {
+      transform: translateY(100%);
+    }
+  }
+}
+
+@utility glass-panel {
+  background-color: rgba(18, 18, 32, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(245, 158, 11, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.5rem;
+  background-image: linear-gradient(to right, var(--color-primary-600), var(--color-primary-500));
+  color: white;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    background-image: linear-gradient(to right, var(--color-primary-500), var(--color-primary-400));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+  }
+}
+
+@utility btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.5rem;
+  background-image: linear-gradient(to right, var(--color-accent-dark), var(--color-accent));
+  color: white;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    background-image: linear-gradient(to right, var(--color-accent), var(--color-accent-light));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+  }
+}
+
+@utility btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.5rem;
+  background-color: rgba(245, 158, 11, 0.03);
+  color: var(--color-primary-400);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(245, 158, 11, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: var(--color-primary-200);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
+}
+
+:root {
+  --ui-bg: #080810;
+  --ui-bg-alt: #121220;
+  --ui-bg-surface: #1a1a30;
+
+  --ui-ink: #f9fafb;
+  --ui-ink-soft: #9ca3af;
+
+  --ui-primary: #f59e0b;
+  --ui-accent: #7c3aed;
+
+  --ui-success: #10b981;
+  --ui-warning: #f59e0b;
+  --ui-danger: #e11d48;
+
+  --ui-card: rgba(26, 26, 48, 0.7);
+  --ui-card-border: rgba(245, 158, 11, 0.1);
+  --ui-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7);
 }
 
 html,
@@ -11,54 +171,67 @@ body {
   height: 100%;
   width: 100%;
   overflow-x: hidden;
+  background-color: #080810;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-size: 16px;
-  line-height: 1.5;
+  font-family: "Lusitana", serif;
+  @apply text-gray-200 antialiased;
+  background-image:
+    radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.08), transparent 35%),
+    radial-gradient(circle at 85% 30%, rgba(245, 158, 11, 0.08), transparent 35%);
 }
 
-#root {
-  min-height: 100vh;
-  width: 100%;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Cinzel", serif;
+  letter-spacing: -0.01em;
+  @apply font-bold text-gray-100;
 }
 
-/* Touch-friendly button styles */
-button {
-  min-height: 44px;
-  min-width: 44px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Disable text selection on touch for game UI */
-.game-ui {
-  user-select: none;
-  -webkit-user-select: none;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-/* High contrast for outdoor visibility */
-:root {
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f3f4f6;
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-accent: #3b82f6;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
+::-webkit-scrollbar-thumb {
+  background-color: rgba(245, 158, 11, 0.2);
+  border-radius: 9999px;
 }
 
-/* Canvas container */
-.canvas-container {
-  position: relative;
-  width: 100%;
-  max-width: 100vw;
-  touch-action: none;
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(245, 158, 11, 0.4);
 }
+
+@layer components {
+
+  /* Ornate Card */
+  .card {
+    @apply glass-panel rounded-xl p-6 transition-all duration-300 border border-primary-500/10;
+  }
+
+  .card-hover {
+    @apply hover:border-primary-500/30 hover:shadow-primary-500/10 hover:-translate-y-1;
+  }
+
+  /* Status Bars */
+  .game-stat-bar {
+    @apply h-2.5 bg-black/60 rounded-full overflow-hidden relative border border-white/5;
+  }
+
+  .game-stat-fill {
+    @apply h-full absolute top-0 left-0 transition-all duration-700 ease-out;
+    background-image: linear-gradient(to right, currentColor, rgba(255, 255, 255, 0.2));
+  }
+}
+
+/* Add specialized fantasy fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lusitana:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap');

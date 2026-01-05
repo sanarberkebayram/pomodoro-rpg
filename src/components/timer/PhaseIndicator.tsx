@@ -19,148 +19,68 @@ export const PhaseIndicator: Component<PhaseIndicatorProps> = (props) => {
   const phaseText = createMemo(() => {
     switch (props.phase) {
       case 'WORK':
-        return 'Work Time';
+        return 'Quest Pursuit';
       case 'SHORT_BREAK':
-        return 'Short Break';
+        return 'Meditative Rest';
       case 'LONG_BREAK':
-        return 'Long Break';
+        return 'Deep Recuperation';
       case 'IDLE':
-        return 'Ready to Start';
+        return 'Standing Watch';
     }
   });
 
-  /**
-   * Get description text for current phase
-   */
-  const phaseDescription = createMemo(() => {
-    switch (props.phase) {
-      case 'WORK':
-        return 'Focus on your task';
-      case 'SHORT_BREAK':
-        return 'Quick rest and recovery';
-      case 'LONG_BREAK':
-        return 'Extended break time';
-      case 'IDLE':
-        return 'Start your Pomodoro session';
-    }
-  });
 
   /**
    * Get styling classes based on phase
    */
   const phaseStyles = createMemo(() => {
-    const baseClasses = 'px-6 py-3 rounded-2xl font-semibold text-lg transition-all duration-300';
-
     switch (props.phase) {
       case 'WORK':
         return {
-          container: `${baseClasses} bg-blue-600 text-white shadow-lg shadow-blue-500/50`,
-          icon: '💼',
-          iconBg: 'bg-blue-500',
+          container: 'bg-primary-500/10 border border-primary-500/20 text-primary-400',
+          glow: 'shadow-[0_0_20px_rgba(245,158,11,0.15)]',
+          icon: '⚔️',
+          iconBg: 'bg-primary-500/20',
+          label: 'text-primary-300 font-display',
         };
       case 'SHORT_BREAK':
         return {
-          container: `${baseClasses} bg-green-600 text-white shadow-lg shadow-green-500/50`,
-          icon: '☕',
-          iconBg: 'bg-green-500',
+          container: 'bg-accent/10 border border-accent/20 text-accent-light',
+          glow: 'shadow-[0_0_20px_rgba(124,58,237,0.15)]',
+          icon: '🍵',
+          iconBg: 'bg-accent/20',
+          label: 'text-accent-light font-display',
         };
       case 'LONG_BREAK':
         return {
-          container: `${baseClasses} bg-emerald-600 text-white shadow-lg shadow-emerald-500/50`,
-          icon: '🎮',
-          iconBg: 'bg-emerald-500',
+          container: 'bg-blue-500/10 border border-blue-500/20 text-blue-400',
+          glow: 'shadow-[0_0_20px_rgba(59,130,246,0.15)]',
+          icon: '🛌',
+          iconBg: 'bg-blue-500/20',
+          label: 'text-blue-300 font-display',
         };
       case 'IDLE':
       default:
         return {
-          container: `${baseClasses} bg-gray-200 text-gray-700 shadow-md`,
-          icon: '⏸️',
-          iconBg: 'bg-gray-300',
+          container: 'bg-white/5 border border-white/10 text-gray-400',
+          glow: 'shadow-none',
+          icon: '🛡️',
+          iconBg: 'bg-white/5',
+          label: 'text-gray-400 font-display',
         };
     }
   });
 
   return (
-    <div class="flex flex-col items-center gap-3 w-full max-w-md mx-auto px-4">
-      {/* Phase badge with icon */}
-      <div class="flex items-center gap-3">
-        {/* Icon circle */}
-        <div
-          class={`
-            flex
-            items-center
-            justify-center
-            w-12
-            h-12
-            rounded-full
-            text-2xl
-            ${phaseStyles().iconBg}
-            shadow-md
-          `}
-          aria-hidden="true"
-        >
-          {phaseStyles().icon}
-        </div>
-
-        {/* Phase name badge */}
-        <div class={phaseStyles().container} role="status" aria-live="polite">
-          {phaseText()}
-        </div>
-      </div>
-
-      {/* Phase description */}
-      <p
-        class="
-          text-center
-          text-sm
-          text-gray-600
-          font-medium
-          max-w-xs
-        "
+    <div class="flex flex-col items-center md:items-start">
+      <div
+        class={`flex items-center gap-3 px-3 py-1 rounded-full border border-white/5 bg-white/5 backdrop-blur-md transition-all duration-500`}
+        role="status"
+        aria-live="polite"
       >
-        {phaseDescription()}
-      </p>
-
-      {/* Running indicator */}
-      {props.isRunning && props.phase !== 'IDLE' && (
-        <div class="flex items-center gap-2 text-xs text-gray-500">
-          <span
-            class="
-              w-2
-              h-2
-              bg-green-500
-              rounded-full
-              animate-pulse
-            "
-            aria-hidden="true"
-          />
-          <span>Timer Running</span>
-        </div>
-      )}
-
-      {/* Work phase lock indicator */}
-      {props.phase === 'WORK' && props.isRunning && (
-        <div
-          class="
-            flex
-            items-center
-            gap-2
-            px-3
-            py-1.5
-            bg-orange-50
-            border
-            border-orange-200
-            rounded-lg
-            text-xs
-            text-orange-700
-            font-medium
-          "
-          role="note"
-        >
-          <span aria-hidden="true">🔒</span>
-          <span>Controls locked - stay focused!</span>
-        </div>
-      )}
+        <span class={`text-[8px] uppercase tracking-[0.3em] font-black ${phaseStyles().label}`}>{phaseText()}</span>
+        <div class="h-1 w-1 rounded-full bg-primary-500 animate-pulse"></div>
+      </div>
     </div>
   );
 };

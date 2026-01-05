@@ -1,11 +1,7 @@
-/**
- * Hospital Component
- * Interface for viewing injuries, managing hospital bills, and healing services
- */
-
-import { Component, Show, createSignal, createMemo } from 'solid-js';
+import { Component, Show, createSignal, createMemo, For } from 'solid-js';
 import type { CharacterStore } from '../../core/state/CharacterState';
 import type { InventoryStore } from '../../core/state/InventoryState';
+import type { ConsumableItem } from '../../core/types/items';
 import { createHospitalSystem } from '../../systems/injury/HospitalSystem';
 import { INJURY_SEVERITY_CONFIG } from '../../systems/injury/InjuryManager';
 
@@ -18,143 +14,82 @@ interface HospitalProps {
 }
 
 /**
- * Hospital - Injury and medical services interface
+ * Hospital - Modern Medical Center interface with dark theme
  */
 export const Hospital: Component<HospitalProps> = (props) => {
   const [notification, setNotification] = createSignal<string | null>(null);
-  const [notificationType, setNotificationType] = createSignal<'success' | 'error' | 'info'>(
-    'info'
-  );
+  const [notificationType, setNotificationType] = createSignal<'success' | 'error' | 'info'>('info');
 
   const hospitalSystem = createHospitalSystem();
 
   const characterState = () => props.characterStore.state;
   const inventoryState = () => props.inventoryStore.state;
 
-  /**
-   * Show notification message briefly
-   */
   const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setNotification(message);
     setNotificationType(type);
     setTimeout(() => setNotification(null), 3000);
   };
 
-  /**
-   * Check if player has healing potions
-   */
   const healingPotions = createMemo(() => {
-    return inventoryState().items.filter((item) => item.type === 'consumable' && item.curesInjury);
+    return inventoryState().slots
+      .filter(s => s.item?.type === 'consumable' && s.item?.curesInjury)
+      .map(s => s.item!);
   });
 
   const hasHealingPotion = createMemo(() => healingPotions().length > 0);
-
-  /**
-   * Get current gold
-   */
   const currentGold = createMemo(() => inventoryState().gold);
+  const treatmentCost = createMemo(() => hospitalSystem.calculateTreatmentCost(characterState().injury));
+  const canAffordTreatment = createMemo(() => hospitalSystem.canAffordTreatment(characterState().injury, currentGold()));
+  const canAffordBillPayment = createMemo(() => hospitalSystem.canAffordBillPayment(characterState().hospitalBill, currentGold()));
 
-  /**
-   * Get treatment cost
-   */
-  const treatmentCost = createMemo(() => {
-    return hospitalSystem.calculateTreatmentCost(characterState().injury);
-  });
-
-  /**
-   * Check if can afford treatment
-   */
-  const canAffordTreatment = createMemo(() => {
-    return hospitalSystem.canAffordTreatment(characterState().injury, currentGold());
-  });
-
-  /**
-   * Check if can afford bill payment
-   */
-  const canAffordBillPayment = createMemo(() => {
-    return hospitalSystem.canAffordBillPayment(characterState().hospitalBill, currentGold());
-  });
-
-  /**
-   * Handle hospital treatment
-   */
   const handleHospitalTreatment = () => {
     if (props.locked) {
-      showNotification('Cannot use hospital during work phase', 'error');
+      showNotification('SYSTEM_LOCKED: Mission in progress', 'error');
       return;
     }
 
     if (!characterState().injury.isInjured) {
-      showNotification('You are not injured', 'info');
+      showNotification('INTEGRITY_STABLE: No trauma detected', 'info');
       return;
     }
 
     const result = hospitalSystem.processHospitalVisit(characterState().injury, currentGold());
 
     if (result.success) {
-      // Heal the injury
       props.characterStore.healInjury();
-
-      // Pay gold if player had enough
-      if (result.goldPaid > 0) {
-        props.inventoryStore.removeGold(result.goldPaid);
-      }
-
-      // Create bill if player didn't have enough
-      if (result.billCreated) {
-        const bill = hospitalSystem.generateBill(result.billAmount);
-        props.characterStore.addHospitalBill(bill.amount);
-      }
-
-      // Also restore health to full
+      if (result.goldPaid > 0) props.inventoryStore.removeGold(result.goldPaid);
+      if (result.billCreated) props.characterStore.addHospitalBill(result.billAmount);
       props.characterStore.fullHeal();
-
-      showNotification(result.message, 'success');
+      showNotification('CRITICAL_REPAIR_SUCCESS: Integrity Restored', 'success');
     } else {
-      showNotification(result.message, 'error');
+      showNotification(`ERROR: ${result.message}`, 'error');
     }
   };
 
-  /**
-   * Handle potion use
-   */
   const handleUsePotionHealing = () => {
     if (props.locked) {
-      showNotification('Cannot use items during work phase', 'error');
+      showNotification('SYSTEM_LOCKED: Mission in progress', 'error');
       return;
     }
 
     if (!characterState().injury.isInjured) {
-      showNotification('You are not injured', 'info');
+      showNotification('INTEGRITY_STABLE: No trauma detected', 'info');
       return;
     }
 
-    const potion = healingPotions()[0];
-    if (!potion) {
-      showNotification('No healing potions in inventory', 'error');
-      return;
-    }
+    const potion = healingPotions()[0] as ConsumableItem;
+    if (!potion) return;
 
-    // Heal injury
     props.characterStore.healInjury();
-
-    // Heal health if potion has healAmount
-    if (potion.healAmount) {
-      props.characterStore.heal(potion.healAmount);
-    }
-
-    // Remove potion from inventory
+    if (potion.healAmount) props.characterStore.heal(potion.healAmount);
     props.inventoryStore.removeItem(potion.id, 1);
-
-    showNotification(`Used ${potion.name}. Injury healed!`, 'success');
+    showNotification(`MODULE_EXECUTED: ${potion.name} applied`, 'success');
   };
 
-  /**
-   * Handle bill payment
-   */
   const handlePayBill = () => {
     if (props.locked) {
-      showNotification('Cannot pay bills during work phase', 'error');
+      showNotification('SYSTEM_LOCKED: Financial systems offline', 'error');
       return;
     }
 
@@ -163,245 +98,185 @@ export const Hospital: Component<HospitalProps> = (props) => {
     if (result.success) {
       props.inventoryStore.removeGold(result.amountPaid);
       props.characterStore.payHospitalBill();
-      showNotification(result.message, 'success');
+      showNotification('TRANSACTION_COMPLETE: Debt resolved', 'success');
     } else {
-      showNotification(result.message, 'error');
+      showNotification(`TRANSACTION_FAILED: ${result.message}`, 'error');
     }
   };
 
-  /**
-   * Get injury severity config
-   */
   const injurySeverityConfig = createMemo(() => {
     if (!characterState().injury.isInjured) return null;
     return INJURY_SEVERITY_CONFIG[characterState().injury.severity];
   });
 
-  /**
-   * Get time since injury formatted
-   */
-  const timeSinceInjury = createMemo(() => {
-    const injury = characterState().injury;
-    if (!injury.isInjured || !injury.injuredAt) return '';
-
-    const ms = Date.now() - injury.injuredAt;
-    const minutes = Math.floor(ms / 60000);
-    const hours = Math.floor(minutes / 60);
-
-    if (hours > 0) {
-      return `${hours}h ${minutes % 60}m ago`;
-    }
-    return `${minutes}m ago`;
-  });
-
   return (
-    <div class="w-full max-w-2xl mx-auto p-4 space-y-6">
+    <div class="flex flex-col h-full bg-[#080810] text-gray-200 p-8 space-y-8 animate-fade-in relative overflow-hidden">
+      {/* Background Decor */}
+      <div class="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+      <div class="absolute bottom-0 left-0 w-96 h-96 bg-danger/5 blur-[150px] rounded-full pointer-events-none"></div>
+
       {/* Header */}
-      <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-900">Hospital</h2>
-        <Show when={props.onClose}>
-          <button
-            onClick={props.onClose}
-            class="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-            disabled={props.locked}
-          >
-            ×
-          </button>
-        </Show>
+      <div class="flex items-start justify-between relative z-10">
+        <div class="space-y-1">
+          <h2 class="text-3xl font-display font-black tracking-tighter uppercase italic text-primary-500">The Great Sanctuary</h2>
+          <p class="text-xs font-mono text-gray-500 uppercase tracking-widest">Restoration of Spirit & Mend of Flesh</p>
+        </div>
+
+        <div class="flex items-center gap-6">
+          <div class="text-right px-4 py-2 rounded-2xl bg-primary-500/5 border border-primary-500/10">
+            <span class="block text-[8px] font-mono text-primary-500/50 uppercase tracking-widest">Imperial Gold</span>
+            <span class="text-xl font-mono font-bold text-primary-400">💰 {currentGold()}</span>
+          </div>
+          <Show when={props.onClose}>
+            <button onClick={props.onClose} class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
+              <span class="text-xl">×</span>
+            </button>
+          </Show>
+        </div>
       </div>
 
-      {/* Notification */}
+      {/* Main Panel Grid */}
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+
+        {/* Left: Injury Status */}
+        <div class="lg:col-span-12">
+          <div class="glass-panel p-6 border-white/5 bg-white/2 relative overflow-hidden rounded-2xl">
+            <div class="flex items-start justify-between mb-8">
+              <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-primary-500/10 pb-2 w-full">Vitals Inspection</h3>
+            </div>
+
+            <Show
+              when={characterState().injury.isInjured}
+              fallback={
+                <div class="flex flex-col items-center justify-center py-12 space-y-4">
+                  <div class="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-3xl animate-pulse">
+                    ⚔️
+                  </div>
+                  <div class="text-center">
+                    <p class="text-xl font-display font-bold text-emerald-400 uppercase tracking-widest">Spirit Fully Restored</p>
+                    <p class="text-[10px] font-mono text-gray-500 uppercase tracking-widest mt-2 italic">"You are ready for the path ahead, traveler."</p>
+                  </div>
+                </div>
+              }
+            >
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2 space-y-6">
+                  <div class="flex items-center gap-6">
+                    <div class="w-24 h-24 rounded-3xl bg-danger/10 border border-danger/20 flex items-center justify-center text-5xl shadow-[0_0_20px_rgba(225,29,72,0.1)]">
+                      🤕
+                    </div>
+                    <div>
+                      <span class="text-[9px] font-mono text-danger font-bold uppercase tracking-widest bg-danger/10 px-2 py-0.5 rounded border border-danger/20">Affliction: {characterState().injury.severity.toUpperCase()}</span>
+                      <h4 class="text-3xl font-display font-bold text-white mt-2 uppercase tracking-tight">{injurySeverityConfig()?.displayName}</h4>
+                      <p class="text-sm text-gray-400 mt-1 italic leading-relaxed">{injurySeverityConfig()?.description}</p>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                      <span class="block text-[9px] font-mono text-gray-500 uppercase mb-1">Combat Penalty</span>
+                      <span class="text-2xl font-display font-bold text-danger">-{characterState().injury.successPenalty}% SUCCESS</span>
+                    </div>
+                    <div class="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                      <span class="block text-[9px] font-mono text-gray-500 uppercase mb-1">Status</span>
+                      <span class="text-2xl font-display font-bold text-gray-300">CRITICAL</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="space-y-4 flex flex-col justify-center">
+                  <button
+                    onClick={handleHospitalTreatment}
+                    disabled={props.locked}
+                    class="btn-primary w-full py-4 text-sm font-bold shadow-[0_0_25px_rgba(245,158,11,0.2)]"
+                  >
+                    BLESSED HEALING ({treatmentCost()}G)
+                  </button>
+
+                  <button
+                    onClick={handleUsePotionHealing}
+                    disabled={props.locked || !hasHealingPotion()}
+                    class={`w-full py-4 rounded-xl border-2 font-bold text-sm transition-all uppercase tracking-widest
+                        ${hasHealingPotion()
+                        ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+                        : 'border-white/5 bg-white/2 text-gray-600 cursor-not-allowed'}
+                      `}
+                  >
+                    USET POTION ({healingPotions().length})
+                  </button>
+
+                  <Show when={!canAffordTreatment()}>
+                    <p class="text-[9px] font-mono text-gray-500 text-center uppercase tracking-tight italic mt-2">"The Sanctuary never turns away the wounded. Debt is accepted."</p>
+                  </Show>
+                </div>
+              </div>
+            </Show>
+          </div>
+        </div>
+
+        {/* Bottom Panel: Debt & Info */}
+        <div class="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Hospital Bills */}
+          <Show when={characterState().hospitalBill}>
+            <div class="glass-panel p-6 border-danger/30 bg-danger/5 rounded-2xl">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="text-2xl">⚖️</span>
+                <h3 class="text-sm font-bold text-danger uppercase tracking-widest font-display">Outstanding Tithing</h3>
+              </div>
+
+              <div class="bg-black/40 rounded-2xl p-6 border border-white/5 mb-6 space-y-4">
+                <div class="flex justify-between items-end border-b border-white/5 pb-4">
+                  <span class="text-xs font-mono text-gray-500 uppercase">Sanctuary Debt</span>
+                  <span class="text-3xl font-display font-black text-white">{characterState().hospitalBill?.amount}G</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-mono text-gray-500 uppercase">Sin Penalty</span>
+                  <span class="font-bold text-danger">-{characterState().hospitalBill?.penalty}% SUCCESS</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handlePayBill}
+                disabled={props.locked || !canAffordBillPayment()}
+                class={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all
+                    ${canAffordBillPayment()
+                    ? 'bg-danger text-white hover:bg-rose-700 shadow-[0_0_20px_rgba(225,29,72,0.2)]'
+                    : 'bg-white/5 border border-white/10 text-gray-600 cursor-not-allowed'}
+                  `}
+              >
+                Settle Debt
+              </button>
+            </div>
+          </Show>
+
+          {/* Medical Protocols */}
+          <div class={`glass-panel p-6 border-white/5 bg-white/2 rounded-2xl flex flex-col justify-center ${!characterState().hospitalBill ? 'md:col-span-2 max-w-2xl mx-auto' : ''}`}>
+            <h3 class="text-[10px] font-bold text-primary-400 uppercase tracking-widest mb-4 font-display">Sanctuary Laws</h3>
+            <ul class="space-y-3 text-[10px] font-mono text-gray-400 uppercase tracking-tight">
+              <li class="flex gap-3"><span class="text-primary-500">◈</span> Defeat in battle may leave lasting scars on the spirit.</li>
+              <li class="flex gap-3"><span class="text-primary-500">◈</span> Wounded adventurers find their focus shattered (Success Penalty).</li>
+              <li class="flex gap-3"><span class="text-primary-500">◈</span> Healing is a right, but gold is needed for the great candles.</li>
+              <li class="flex gap-3"><span class="text-primary-500">◈</span> Debt to the sanctuary is a burden upon one's soul.</li>
+              <li class="flex gap-3"><span class="text-primary-500">◈</span> Alchemical elixirs are a traveler's best friend.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Global Notifications */}
       <Show when={notification()}>
-        <div
-          class={`p-3 rounded-lg text-sm font-medium ${
-            notificationType() === 'success'
-              ? 'bg-green-100 text-green-800'
-              : notificationType() === 'error'
-                ? 'bg-red-100 text-red-800'
-                : 'bg-blue-100 text-blue-800'
-          }`}
-        >
-          {notification()}
-        </div>
-      </Show>
-
-      {/* Gold Display */}
-      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div class="text-sm text-yellow-800 font-medium">Your Gold</div>
-        <div class="text-2xl font-bold text-yellow-900">{currentGold()} G</div>
-      </div>
-
-      {/* Injury Status */}
-      <div class="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
-        <h3 class="text-lg font-semibold text-gray-900">Injury Status</h3>
-
-        <Show
-          when={characterState().injury.isInjured}
-          fallback={
-            <div class="text-center py-6">
-              <div class="text-4xl mb-2">✓</div>
-              <div class="text-gray-600">You are healthy</div>
-            </div>
-          }
-        >
-          <div class="space-y-3">
-            {/* Severity */}
-            <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-              <div>
-                <div class="text-sm text-red-600 font-medium">Severity</div>
-                <div class="text-lg font-bold text-red-900">
-                  {injurySeverityConfig()?.displayName}
-                </div>
-              </div>
-              <div class="text-3xl">🤕</div>
-            </div>
-
-            {/* Description */}
-            <div class="text-sm text-gray-600">{injurySeverityConfig()?.description}</div>
-
-            {/* Effects */}
-            <div class="grid grid-cols-2 gap-3">
-              <div class="p-3 bg-gray-50 rounded-lg">
-                <div class="text-xs text-gray-500">Success Penalty</div>
-                <div class="text-lg font-semibold text-red-600">
-                  -{characterState().injury.successPenalty}%
-                </div>
-              </div>
-              <div class="p-3 bg-gray-50 rounded-lg">
-                <div class="text-xs text-gray-500">Time Injured</div>
-                <div class="text-lg font-semibold text-gray-900">{timeSinceInjury()}</div>
-              </div>
-            </div>
-          </div>
-        </Show>
-      </div>
-
-      {/* Healing Options */}
-      <Show when={characterState().injury.isInjured}>
-        <div class="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-          <h3 class="text-lg font-semibold text-gray-900">Healing Options</h3>
-
-          {/* Hospital Treatment */}
-          <div class="border border-gray-200 rounded-lg p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="font-semibold text-gray-900">Hospital Treatment</div>
-                <div class="text-sm text-gray-600">
-                  Professional medical care - fully heals injuries and restores health
-                </div>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between">
-              <div class="text-lg font-bold text-gray-900">Cost: {treatmentCost()} Gold</div>
-              <button
-                onClick={handleHospitalTreatment}
-                disabled={props.locked}
-                class={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                  props.locked
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : canAffordTreatment()
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-blue-400 text-white hover:bg-blue-500'
-                }`}
-              >
-                Get Treatment
-              </button>
-            </div>
-
-            <Show when={!canAffordTreatment()}>
-              <div class="text-xs text-gray-500 italic">
-                Don't worry! We'll create a bill if you can't pay now. No one is turned away.
-              </div>
-            </Show>
-          </div>
-
-          {/* Healing Potion */}
-          <div class="border border-gray-200 rounded-lg p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <div class="font-semibold text-gray-900">Use Healing Potion</div>
-                <div class="text-sm text-gray-600">
-                  Consume a healing potion from your inventory
-                </div>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between">
-              <div class="text-sm text-gray-600">
-                Available: {healingPotions().length} potion
-                {healingPotions().length !== 1 ? 's' : ''}
-              </div>
-              <button
-                onClick={handleUsePotionHealing}
-                disabled={props.locked || !hasHealingPotion()}
-                class={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                  props.locked || !hasHealingPotion()
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                }`}
-              >
-                Use Potion
-              </button>
-            </div>
+        <div class="absolute bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+          <div class={`
+              backdrop-blur-xl border-2 px-8 py-4 rounded-2xl shadow-2xl animate-slide-up flex items-center gap-4
+              ${notificationType() === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
+              notificationType() === 'error' ? 'bg-danger/10 border-danger/30 text-danger' :
+                'bg-primary-500/10 border-primary-500/30 text-primary-400'}
+           `}>
+            <div class={`w-2 h-2 rounded-full animate-pulse ${notificationType() === 'success' ? 'bg-emerald-500' : notificationType() === 'error' ? 'bg-danger' : 'bg-primary-500'}`}></div>
+            <span class="text-xs font-display font-bold tracking-widest uppercase">{notification()}</span>
           </div>
         </div>
       </Show>
-
-      {/* Hospital Bills */}
-      <Show when={characterState().hospitalBill}>
-        <div class="bg-white border border-red-300 rounded-lg p-4 space-y-4">
-          <h3 class="text-lg font-semibold text-red-900">Outstanding Bill</h3>
-
-          <div class="p-4 bg-red-50 rounded-lg space-y-2">
-            <div class="flex items-center justify-between">
-              <div class="text-sm text-red-600">Amount Due</div>
-              <div class="text-xl font-bold text-red-900">
-                {characterState().hospitalBill?.amount} Gold
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between">
-              <div class="text-sm text-red-600">Success Penalty</div>
-              <div class="text-lg font-semibold text-red-900">
-                -{characterState().hospitalBill?.penalty}%
-              </div>
-            </div>
-
-            <div class="text-xs text-red-600 mt-2">
-              {hospitalSystem.getBillStatusMessage(characterState().hospitalBill)}
-            </div>
-          </div>
-
-          <button
-            onClick={handlePayBill}
-            disabled={props.locked || !canAffordBillPayment()}
-            class={`w-full px-6 py-3 rounded-lg font-medium transition-colors ${
-              props.locked || !canAffordBillPayment()
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-red-600 text-white hover:bg-red-700'
-            }`}
-          >
-            <Show when={canAffordBillPayment()} fallback="Insufficient Funds">
-              Pay Bill
-            </Show>
-          </button>
-        </div>
-      </Show>
-
-      {/* Info Note */}
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div class="text-sm text-blue-800">
-          <div class="font-medium mb-1">💡 About the Hospital</div>
-          <ul class="text-xs space-y-1 list-disc list-inside">
-            <li>Injuries occur when tasks fail, reducing your success chance</li>
-            <li>Hospital treatment fully heals injuries and restores health</li>
-            <li>If you can't afford treatment, we'll create a bill</li>
-            <li>Unpaid bills give a small penalty but never lock progression</li>
-            <li>Healing potions are an alternative to hospital visits</li>
-          </ul>
-        </div>
-      </div>
     </div>
   );
 };

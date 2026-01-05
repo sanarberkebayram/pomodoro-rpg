@@ -5,9 +5,6 @@
 
 import { PomodoroTimer } from '../../systems/pomodoro/PomodoroTimer';
 import { PomodoroPhase } from '../../systems/pomodoro/types';
-import { TaskManager } from '../../systems/tasks/TaskManager';
-import { TaskExecutor } from '../../systems/tasks/TaskExecutor';
-import { EventGenerator } from '../../systems/events/EventGenerator';
 import { GameEvent } from '../types/events';
 import { GameState } from '../types/gameState';
 import { TaskOutcome } from '../types/tasks';
@@ -30,9 +27,6 @@ export interface GameControllerCallbacks {
  */
 export class GameController {
   private timer: PomodoroTimer;
-  private taskManager: TaskManager;
-  private taskExecutor: TaskExecutor | null = null;
-  private eventGenerator: EventGenerator;
   private callbacks: GameControllerCallbacks;
   private tickInterval: number | null = null;
   private unsubscribeTimer: (() => void) | null = null;
@@ -45,18 +39,10 @@ export class GameController {
     callbacks: GameControllerCallbacks = {}
   ) {
     this.timer = timer;
-    this.taskManager = new TaskManager();
-    this.eventGenerator = new EventGenerator();
     this.callbacks = callbacks;
     this.lastPhase = this.timer.getState().phase;
 
-    // Restore task state if exists
-    if (initialState.tasks.activeTask) {
-      this.taskManager.selectTask(
-        initialState.tasks.activeTask.taskId,
-        initialState.tasks.activeTask.riskLevel
-      );
-    }
+    void initialState;
   }
 
   /**
@@ -69,10 +55,8 @@ export class GameController {
 
     // Set up timer listeners
     this.unsubscribeTimer = this.timer.subscribe((state) => {
-      this.callbacks.onTimerTick?.(state.remainingSeconds);
-
-      // Handle phase changes
       this.handlePhaseChange(state.phase);
+      this.callbacks.onTimerTick?.(state.remainingSeconds);
     });
 
     // Start the tick interval
@@ -114,7 +98,6 @@ export class GameController {
    */
   public reset(): void {
     this.timer.dispatch({ type: 'RESET' });
-    this.stopTaskExecution();
   }
 
   /**
@@ -125,25 +108,10 @@ export class GameController {
   }
 
   /**
-   * Get task manager
-   */
-  public getTaskManager(): TaskManager {
-    return this.taskManager;
-  }
-
-  /**
-   * Get current events from task execution
-   */
-  public getCurrentEvents(): GameEvent[] {
-    return this.taskExecutor?.getGeneratedEvents() ?? [];
-  }
-
-  /**
    * Clean up resources
    */
   public destroy(): void {
     this.stopTickLoop();
-    this.stopTaskExecution();
     if (this.unsubscribeTimer) {
       this.unsubscribeTimer();
       this.unsubscribeTimer = null;
@@ -155,98 +123,14 @@ export class GameController {
    * Handle phase changes
    */
   private handlePhaseChange(phase: PomodoroPhase): void {
-    const previousPhase = this.lastPhase;
+    if (phase === this.lastPhase) {
+      return;
+    }
+
     this.lastPhase = phase;
 
     // Notify phase change
     this.callbacks.onPhaseChange?.(phase);
-
-    // Start task execution on WORK phase
-    if (phase === 'WORK' && previousPhase !== 'WORK') {
-      this.startTaskExecution();
-    }
-
-    // Complete task when leaving WORK phase
-    if (previousPhase === 'WORK' && phase !== 'WORK') {
-      this.completeTaskExecution();
-    }
-  }
-
-  /**
-   * Start task execution during WORK phase
-   */
-  private startTaskExecution(): void {
-    const selectedTask = this.taskManager.getSelectedTask();
-    if (!selectedTask) {
-      console.warn('[GameController] No task selected for WORK phase');
-      return;
-    }
-
-    // Create task executor
-    const workDuration = this.timer.getConfig().workDuration * 60; // Convert to seconds
-
-    this.taskExecutor = new TaskExecutor(
-      selectedTask.task,
-      selectedTask.riskLevel,
-      {
-        // Mock character state for now - will be replaced with real state
-        power: 10,
-        defense: 5,
-        focus: 8,
-        luck: 5,
-        health: 100,
-        maxHealth: 100,
-      },
-      {},
-      this.eventGenerator,
-      workDuration
-    );
-
-    // Set up event callback
-    this.taskExecutor.onEventGenerated = (event) => {
-      this.callbacks.onEventGenerated?.(event);
-    };
-
-    // Start execution
-    this.taskExecutor.start();
-  }
-
-  /**
-   * Update task execution progress
-   */
-  private updateTaskExecution(elapsedSeconds: number): void {
-    if (!this.taskExecutor) {
-      return;
-    }
-
-    this.taskExecutor.update(elapsedSeconds);
-
-    const progress = this.taskExecutor.getProgress();
-    this.callbacks.onTaskProgress?.(progress);
-  }
-
-  /**
-   * Complete task execution
-   */
-  private completeTaskExecution(): void {
-    if (!this.taskExecutor) {
-      return;
-    }
-
-    const outcome = this.taskExecutor.complete();
-    this.callbacks.onTaskComplete?.(outcome);
-
-    this.taskExecutor = null;
-  }
-
-  /**
-   * Stop task execution
-   */
-  private stopTaskExecution(): void {
-    if (this.taskExecutor) {
-      this.taskExecutor.stop();
-      this.taskExecutor = null;
-    }
   }
 
   /**
@@ -263,14 +147,6 @@ export class GameController {
       if (state.isRunning && !state.isPaused) {
         // Tick the timer
         this.timer.dispatch({ type: 'TICK', deltaSeconds: 1 });
-
-        // Update task execution if in WORK phase
-        if (state.phase === 'WORK') {
-          const config = this.timer.getConfig();
-          const totalSeconds = config.workDuration * 60;
-          const elapsedSeconds = totalSeconds - state.remainingSeconds;
-          this.updateTaskExecution(elapsedSeconds);
-        }
       }
     }, 1000);
   }

@@ -150,7 +150,7 @@ export const GameCanvas: Component<GameCanvasProps> = (props) => {
     >
       {/* Loading indicator */}
       <Show when={isLoading()}>
-        <div class="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75">
+        <div class="absolute inset-0 flex items-center justify-center bg-slate-900/80">
           <div class="text-white text-lg">Loading canvas...</div>
         </div>
       </Show>

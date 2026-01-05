@@ -1,8 +1,3 @@
-/**
- * ChestOpening Component
- * UI for opening chests and displaying loot rewards
- */
-
 import { Component, createSignal, Show, For, createEffect } from 'solid-js';
 import type { Chest, ChestOpenResult } from '../../systems/loot/ChestManager';
 import {
@@ -27,7 +22,7 @@ interface ChestOpeningProps {
 }
 
 /**
- * ChestOpening - Main chest opening interface
+ * ChestOpening - Main chest opening interface with modern dark theme
  */
 export const ChestOpening: Component<ChestOpeningProps> = (props) => {
   const [selectedChest, setSelectedChest] = createSignal<Chest | null>(null);
@@ -39,7 +34,7 @@ export const ChestOpening: Component<ChestOpeningProps> = (props) => {
 
   // Handle chest selection
   const handleSelectChest = (chest: Chest) => {
-    if (openResult()) return; // Don't allow selection while viewing results
+    if (openResult()) return;
     setSelectedChest(chest);
   };
 
@@ -55,7 +50,7 @@ export const ChestOpening: Component<ChestOpeningProps> = (props) => {
       const result = props.onOpenChest(chest);
       setOpenResult(result);
       setIsOpening(false);
-    }, 1000);
+    }, 1200);
   };
 
   // Handle loot collection
@@ -77,44 +72,41 @@ export const ChestOpening: Component<ChestOpeningProps> = (props) => {
   });
 
   return (
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">
-      <div class="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl p-4 animate-fade-in">
+      <div class="glass-panel bg-[#05070a]/90 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
         {/* Header */}
-        <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
-          <div class="flex justify-between items-center">
+        <div class="px-8 py-6 border-b border-white/5 bg-gradient-to-r from-white/5 to-transparent relative">
+          <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent"></div>
+
+          <div class="flex justify-between items-center relative z-10">
             <div>
-              <h2 class="text-2xl font-bold">Chest Opening</h2>
-              <p class="text-purple-100 mt-1">
-                {unopenedChests().length} unopened chest{unopenedChests().length !== 1 ? 's' : ''}
-              </p>
+              <h2 class="text-3xl font-display font-black tracking-tighter uppercase italic text-primary-500">Treasure Hoard</h2>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse"></span>
+                <p class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">
+                  {unopenedChests().length} Sealed Relics Discovered
+                </p>
+              </div>
             </div>
             <button
               onClick={props.onClose}
-              class="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors"
-              aria-label="Close"
+              class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-danger/20 hover:border-danger/30 hover:text-danger transition-all"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <span class="text-xl">×</span>
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div class="flex-1 overflow-y-auto p-6">
+        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
           <Show
             when={openResult()}
             fallback={
-              <div class="space-y-6">
-                {/* Chest Selection */}
-                <div>
-                  <h3 class="text-lg font-semibold mb-3 text-gray-800">Select a Chest</h3>
-                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Left: Chest Selection */}
+                <div class="lg:col-span-7 space-y-6">
+                  <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-primary-500/10 pb-2">Loot Queue</h3>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <For each={unopenedChests()}>
                       {(chest) => (
                         <ChestCard
@@ -127,87 +119,69 @@ export const ChestOpening: Component<ChestOpeningProps> = (props) => {
                   </div>
                 </div>
 
-                {/* Selected Chest Details */}
-                <Show when={selectedChest()}>
-                  {(chest) => (
-                    <div class="bg-gray-50 rounded-lg p-6 border-2 border-gray-200">
-                      <h3 class="text-xl font-bold mb-4 text-gray-800">
-                        {getChestQualityName(chest().quality)}
-                      </h3>
-
-                      <div class="space-y-3 mb-6">
-                        <div class="flex justify-between text-sm">
-                          <span class="text-gray-600">Source:</span>
-                          <span class="font-semibold capitalize text-gray-800">
-                            {chest().sourceTask}
-                          </span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                          <span class="text-gray-600">Loot Quality:</span>
-                          <span class="font-semibold text-gray-800">
-                            {chest().lootQuality.toFixed(1)}x
-                          </span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                          <span class="text-gray-600">Estimated Value:</span>
-                          <span class="font-semibold text-yellow-600">
-                            {(() => {
-                              const estimate = estimateChestValue(chest());
-                              return `${estimate.min}-${estimate.max} gold`;
-                            })()}
-                          </span>
-                        </div>
+                {/* Right: Selected Chest Details */}
+                <div class="lg:col-span-5">
+                  <Show
+                    when={selectedChest()}
+                    fallback={
+                      <div class="h-full flex flex-col items-center justify-center text-center p-8 border border-dashed border-primary-500/20 rounded-3xl opacity-50">
+                        <span class="text-4xl mb-4">🔦</span>
+                        <p class="text-xs font-mono uppercase tracking-widest text-primary-500">Choose a Crate to Inspect</p>
                       </div>
+                    }
+                  >
+                    {(chest) => (
+                      <div class="glass-panel p-6 border-primary-500/10 bg-white/2 space-y-8 animate-slide-up h-full flex flex-col rounded-2xl">
+                        <div class="text-center">
+                          <div class="w-24 h-24 mx-auto mb-4 rounded-3xl bg-black/40 border-2 flex items-center justify-center text-5xl transform -rotate-6 shadow-[0_0_30px_rgba(245,158,11,0.1)] transition-all duration-500 group-hover:rotate-0"
+                            style={{ 'border-color': getChestQualityColor(chest().quality) }}>
+                            📦
+                          </div>
+                          <h3 class="text-2xl font-display font-bold text-white mb-1 uppercase tracking-tight">
+                            {getChestQualityName(chest().quality)} Chest
+                          </h3>
+                          <span class="text-[9px] font-mono text-gray-500 uppercase tracking-widest">Found in: {chest().sourceTask}</span>
+                        </div>
 
-                      <button
-                        onClick={handleOpenChest}
-                        disabled={isOpening()}
-                        class={`
-                          w-full
-                          py-3
-                          px-6
-                          rounded-lg
-                          font-bold
-                          text-white
-                          transition-all
-                          ${
-                            isOpening()
-                              ? 'bg-gray-400 cursor-not-allowed'
-                              : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 active:scale-95'
-                          }
-                        `}
-                      >
-                        {isOpening() ? (
-                          <span class="flex items-center justify-center gap-2">
-                            <svg
-                              class="animate-spin h-5 w-5"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                class="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                stroke-width="4"
-                              />
-                              <path
-                                class="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              />
-                            </svg>
-                            Opening...
-                          </span>
-                        ) : (
-                          'Open Chest'
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </Show>
+                        <div class="space-y-4">
+                          <div class="flex justify-between items-center p-3 rounded-xl bg-black/40 border border-white/5">
+                            <span class="text-[10px] font-mono text-gray-500 uppercase">Luck Factor</span>
+                            <span class="text-sm font-bold text-primary-400">{chest().lootQuality.toFixed(1)}x</span>
+                          </div>
+                          <div class="flex justify-between items-center p-3 rounded-xl bg-black/40 border border-white/5">
+                            <span class="text-[10px] font-mono text-gray-500 uppercase">Estimated Spoils</span>
+                            <span class="text-sm font-bold text-amber-500">
+                              {(() => {
+                                const estimate = estimateChestValue(chest());
+                                return `${estimate.min}-${estimate.max} CR`;
+                              })()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div class="flex-1"></div>
+
+                        <button
+                          onClick={handleOpenChest}
+                          disabled={isOpening()}
+                          class={`
+                            btn-primary w-full py-4 text-sm font-bold
+                            ${isOpening() ? 'opacity-50 cursor-not-allowed' : ''}
+                          `}
+                        >
+                          {isOpening() ? (
+                            <span class="flex items-center justify-center gap-3">
+                              <div class="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
+                              BREAKING SEAL...
+                            </span>
+                          ) : (
+                            'Break the Seal'
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </Show>
+                </div>
               </div>
             }
           >
@@ -229,7 +203,7 @@ export const ChestOpening: Component<ChestOpeningProps> = (props) => {
 };
 
 /**
- * ChestCard - Individual chest display card
+ * ChestCard - Individual chest display card with modern dark theme
  */
 const ChestCard: Component<{
   chest: Chest;
@@ -242,41 +216,37 @@ const ChestCard: Component<{
     <button
       onClick={props.onClick}
       class={`
-        relative
-        p-4
-        rounded-lg
-        border-2
-        transition-all
-        duration-200
-        ${
-          props.selected
-            ? 'border-blue-500 bg-blue-50 scale-105 shadow-lg'
-            : 'border-gray-300 bg-white hover:border-gray-400 hover:shadow-md'
+        group relative p-6 rounded-3xl border transition-all duration-300
+        ${props.selected
+          ? 'border-primary-500 bg-primary-500/10 shadow-[0_0_20px_rgba(14,165,233,0.2)] scale-[1.05]'
+          : 'border-white/5 bg-white/2 hover:border-white/10 hover:bg-white/5'
         }
       `}
     >
-      {/* Chest Icon */}
+      {/* Chest Icon Wrapper */}
       <div
-        class="w-16 h-16 mx-auto mb-2 rounded-lg flex items-center justify-center text-3xl"
-        style={{ 'background-color': qualityColor() }}
+        class="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-inner bg-black/40"
+        style={{ 'border': `1px solid ${qualityColor()}40` }}
       >
-        📦
+        <span class="drop-shadow-lg">📦</span>
       </div>
 
-      {/* Chest Name */}
-      <div class="text-xs font-semibold text-center text-gray-700">
-        {getChestQualityName(props.chest.quality)}
+      {/* Chest Info */}
+      <div class="text-center">
+        <div class="text-[10px] font-display font-bold text-white uppercase tracking-tight truncate mb-1">
+          {getChestQualityName(props.chest.quality)}
+        </div>
+        <div class="text-[8px] font-mono text-gray-500 uppercase tracking-widest truncate">
+          {props.chest.sourceTask}
+        </div>
       </div>
 
-      {/* Selection Indicator */}
+      {/* Selection Glow */}
       <Show when={props.selected}>
-        <div class="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-          <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fill-rule="evenodd"
-              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-              clip-rule="evenodd"
-            />
+        <div class="absolute inset-0 rounded-3xl border-2 border-primary-500/50 pointer-events-none animate-pulse"></div>
+        <div class="absolute -top-1 -right-1 w-4 h-4 bg-primary-500 rounded-full flex items-center justify-center shadow-lg border-2 border-black">
+          <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7" />
           </svg>
         </div>
       </Show>

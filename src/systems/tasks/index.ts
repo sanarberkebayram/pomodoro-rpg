@@ -20,6 +20,9 @@ export {
 export { TaskExecutor, createTaskExecutor } from './TaskExecutor';
 export type { TaskExecutionState } from './TaskExecutor';
 
+// Task Completion Handler
+export { TaskCompletionHandler, createTaskCompletionHandler } from './TaskCompletionHandler';
+
 // Task Implementations
 export { ExpeditionTask, createExpeditionTask } from './tasks/Expedition';
 export { RaidTask, createRaidTask } from './tasks/Raid';

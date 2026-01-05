@@ -23,3 +23,10 @@ export {
   EventStateActions,
   type EventState,
 } from './EventState';
+
+export {
+  createChestStore,
+  createInitialChestState,
+  type ChestStore,
+  type ChestState,
+} from './ChestState';

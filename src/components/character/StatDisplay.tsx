@@ -3,12 +3,18 @@
  * Displays character stats with visual progress bars and bonuses
  */
 
-import { Component, For, createMemo } from 'solid-js';
-import type { CharacterStats } from '../../core/types/character';
+import { Component, For, Show } from 'solid-js';
+import type { CharacterStats, InjuryState, HospitalBill } from '../../core/types/character';
+import { HealthBar } from '../common/HealthBar';
+import { InjuryIndicator } from '../common/InjuryIndicator';
 
 interface StatDisplayProps {
   baseStats: CharacterStats;
   computedStats: CharacterStats;
+  /** Current injury state */
+  injury?: InjuryState;
+  /** Current hospital bill */
+  hospitalBill?: HospitalBill | null;
   /** Whether to show detailed breakdown */
   detailed?: boolean;
   /** Layout: horizontal or vertical */
@@ -101,46 +107,35 @@ export const StatDisplay: Component<StatDisplayProps> = (props) => {
     return colorMap[color] || colorMap.red;
   };
 
-  /**
-   * Health percentage for progress bar
-   */
-  const healthPercentage = createMemo(() => {
-    return (props.computedStats.health / props.computedStats.maxHealth) * 100;
-  });
-
-  /**
-   * Health bar color based on percentage
-   */
-  const healthBarColor = createMemo(() => {
-    const percentage = healthPercentage();
-    if (percentage > 70) return 'bg-green-500';
-    if (percentage > 30) return 'bg-yellow-500';
-    return 'bg-red-500';
-  });
-
   return (
     <div class="space-y-4">
-      {/* Health bar - always shown at top */}
+      {/* Health bar with injury indicator */}
       <div class="bg-white border-2 border-gray-300 rounded-lg p-4">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <span class="text-xl">❤️</span>
-            <span class="font-bold text-gray-800">Health</span>
-          </div>
-          <span class="text-sm font-semibold text-gray-700">
-            {Math.floor(props.computedStats.health)} / {Math.floor(props.computedStats.maxHealth)}
-          </span>
-        </div>
-        <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-          <div
-            class={`h-full ${healthBarColor()} transition-all duration-300`}
-            style={{ width: `${healthPercentage()}%` }}
-            role="progressbar"
-            aria-valuenow={props.computedStats.health}
-            aria-valuemin={0}
-            aria-valuemax={props.computedStats.maxHealth}
-          />
-        </div>
+        <HealthBar
+          current={props.computedStats.health}
+          max={props.computedStats.maxHealth}
+          isInjured={props.injury?.isInjured}
+          showValues={true}
+          size="medium"
+        />
+      </div>
+
+      {/* Status indicators row */}
+      <div class="flex gap-2">
+        {/* Injury indicator */}
+        <Show when={props.injury}>
+          {(injury) => <InjuryIndicator injury={injury()} mode="compact" class="flex-1" />}
+        </Show>
+
+        {/* Hospital bill indicator */}
+        <Show when={props.hospitalBill}>
+          {(bill) => (
+            <div class="flex-1 px-2 py-1 bg-red-100 text-red-800 rounded-lg text-xs font-medium flex items-center justify-center gap-1">
+              <span>💰</span>
+              <span>Bill: {bill().amount}G</span>
+            </div>
+          )}
+        </Show>
       </div>
 
       {/* Main stats grid */}

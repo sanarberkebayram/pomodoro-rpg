@@ -12,6 +12,7 @@ import type {
   TaskRewards,
   ActiveTask,
 } from '../../core/types/tasks';
+import { createInjuryManager } from '../injury/InjuryManager';
 
 /**
  * Calculate success chance for a task
@@ -203,42 +204,24 @@ export function calculateRewards(
 
 /**
  * Determine if character gets injured from task failure
+ * Uses InjuryManager for consistent injury logic
  */
 export function shouldApplyInjury(
   taskConfig: TaskConfig,
   outcome: TaskOutcome,
   defenseStat: number
 ): boolean {
-  // Only failures can cause injury
-  if (outcome !== 'failure') {
-    return false;
-  }
-
-  // Calculate injury chance (reduced by defense)
-  const baseInjuryChance = taskConfig.injuryChanceOnFailure;
-  const defenseReduction = Math.floor(defenseStat / 2); // Each 2 defense reduces injury chance by 1%
-  const finalInjuryChance = Math.max(5, baseInjuryChance - defenseReduction); // Minimum 5% injury chance
-
-  const roll = Math.random() * 100;
-  return roll < finalInjuryChance;
+  const injuryManager = createInjuryManager();
+  return injuryManager.shouldApplyInjury(outcome, taskConfig.injuryChanceOnFailure, defenseStat);
 }
 
 /**
  * Determine injury severity based on task risk level
+ * Uses InjuryManager for consistent injury logic
  */
 export function determineInjurySeverity(riskLevel: RiskLevel): 'minor' | 'moderate' | 'severe' {
-  if (riskLevel === 'safe') {
-    return 'minor';
-  } else if (riskLevel === 'standard') {
-    // 70% minor, 30% moderate
-    return Math.random() < 0.7 ? 'minor' : 'moderate';
-  } else {
-    // risky: 40% minor, 40% moderate, 20% severe
-    const roll = Math.random();
-    if (roll < 0.4) return 'minor';
-    if (roll < 0.8) return 'moderate';
-    return 'severe';
-  }
+  const injuryManager = createInjuryManager();
+  return injuryManager.determineInjurySeverity(riskLevel);
 }
 
 /**

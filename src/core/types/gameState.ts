@@ -5,6 +5,7 @@
 
 import { TimerState, TimerConfig } from '../../systems/pomodoro/types';
 import { ProgressionState } from '../../systems/progression/types';
+import { EventState } from '../state/EventState';
 import { CharacterState } from './character';
 import { InventoryState } from './items';
 import { TaskState } from './tasks';
@@ -28,6 +29,9 @@ export interface GameState {
 
   /** Task state (active task, history, statistics) */
   tasks: TaskState;
+
+  /** Game events state */
+  eventState: EventState;
 
   /** Progression data (XP, level, streaks) */
   progression: ProgressionState;

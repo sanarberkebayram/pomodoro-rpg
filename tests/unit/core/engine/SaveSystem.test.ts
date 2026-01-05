@@ -5,6 +5,8 @@ import {
   STORAGE_KEYS,
   CURRENT_SAVE_VERSION,
 } from '../../../../src/core/types/gameState';
+import { createInitialEventState } from '../../../../src/core/state/EventState';
+import { createInitialTaskState } from '../../../../src/core/state/TaskState';
 import type { PomodoroPhase } from '../../../../src/systems/pomodoro/types';
 
 describe('SaveSystem', () => {
@@ -399,6 +401,7 @@ function createMockGameState(): GameState {
         mostValuableItemId: null,
       },
     },
+    tasks: createInitialTaskState(),
     progression: {
       level: 1,
       currentXP: 0,
@@ -411,6 +414,7 @@ function createMockGameState(): GameState {
         totalActiveDays: 0,
       },
     },
+    eventState: createInitialEventState(),
     metadata: {
       version: CURRENT_SAVE_VERSION,
       lastSaveTimestamp: Date.now(),

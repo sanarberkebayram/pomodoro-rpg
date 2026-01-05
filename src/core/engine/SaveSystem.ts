@@ -221,6 +221,7 @@ export class SaveSystem {
       state.character &&
       state.inventory &&
       state.progression &&
+      state.eventState &&
       state.metadata &&
       typeof state.metadata.version === 'string' &&
       typeof state.metadata.lastSaveTimestamp === 'number' &&

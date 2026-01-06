@@ -7,6 +7,8 @@
 import type { TaskCompletionResult } from '../../core/types/tasks';
 import type { CharacterStore } from '../../core/state/CharacterState';
 import type { InventoryStore } from '../../core/state/InventoryState';
+import type { ProgressionManager } from '../progression/ProgressionManager';
+import type { XPGainEvent } from '../progression';
 
 /**
  * Task completion handler
@@ -15,16 +17,21 @@ import type { InventoryStore } from '../../core/state/InventoryState';
 export class TaskCompletionHandler {
   constructor(
     private characterStore: CharacterStore,
-    private inventoryStore: InventoryStore
+    private inventoryStore: InventoryStore,
+    private progressionManager?: ProgressionManager
   ) {}
 
   /**
    * Process task completion result and apply all effects
    * @param result - Task completion result
+   * @returns XP gain event if progression manager is available
    */
-  processCompletion(result: TaskCompletionResult): void {
-    // Apply rewards
+  processCompletion(result: TaskCompletionResult): XPGainEvent | null {
+    // Apply rewards (gold, materials)
     this.applyRewards(result);
+
+    // Apply XP and check for level up
+    const xpEvent = this.applyXP(result);
 
     // Apply injury if occurred
     this.applyInjury(result);
@@ -34,6 +41,8 @@ export class TaskCompletionHandler {
 
     // Recalculate stats after all changes
     this.characterStore.recalculateStats();
+
+    return xpEvent;
   }
 
   /**
@@ -53,11 +62,27 @@ export class TaskCompletionHandler {
     // if (rewards.materials.min > 0) {
     //   this.inventoryStore.addMaterials(rewards.materials.min);
     // }
+  }
 
-    // Add XP (handled separately through progression system)
-    // XP application should be handled by a ProgressionManager
-    // For now, we'll leave this as a placeholder
-    // TODO: Integrate with ProgressionManager when Phase 8 is implemented
+  /**
+   * Apply XP rewards and handle leveling
+   * @param result - Task completion result
+   * @returns XP gain event if progression manager is available
+   */
+  private applyXP(result: TaskCompletionResult): XPGainEvent | null {
+    if (!this.progressionManager) {
+      return null;
+    }
+
+    const { rewards, outcome, task } = result;
+
+    // Calculate average XP from reward range
+    const averageXP = Math.floor((rewards.xp.min + rewards.xp.max) / 2);
+
+    // Award XP through progression manager
+    const xpEvent = this.progressionManager.awardXP(averageXP, outcome, task.taskType);
+
+    return xpEvent;
   }
 
   /**
@@ -135,7 +160,8 @@ export class TaskCompletionHandler {
  */
 export function createTaskCompletionHandler(
   characterStore: CharacterStore,
-  inventoryStore: InventoryStore
+  inventoryStore: InventoryStore,
+  progressionManager?: ProgressionManager
 ): TaskCompletionHandler {
-  return new TaskCompletionHandler(characterStore, inventoryStore);
+  return new TaskCompletionHandler(characterStore, inventoryStore, progressionManager);
 }

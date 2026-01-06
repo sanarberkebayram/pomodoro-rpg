@@ -30,3 +30,9 @@ export {
   type ChestStore,
   type ChestState,
 } from './ChestState';
+
+export {
+  createProgressionStore,
+  createInitialProgressionState,
+  type ProgressionStore,
+} from './ProgressionState';
